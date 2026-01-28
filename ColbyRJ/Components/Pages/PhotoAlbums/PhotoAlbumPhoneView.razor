@@ -1,0 +1,101 @@
+﻿@page "/phonePhotoAlbum/{key}"
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IPhotoAlbumRepository photoAlbumRepository
+@inject IMapper mapper
+
+<div class="">
+    <HeadingC Text="Photo Album" />
+</div>
+<div class="text-center mt-2 pb-2">
+    <a href="phonePhotoAlbums" class="pBtnReturn">Return</a>
+</div>
+
+<div class="viewDiv">
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">@PhotoAlbum.YearMonth</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5>@PhotoAlbum.Title</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">Owner: @PhotoAlbum.Owner</h5>
+    </div>
+
+    <div class="divItem mt-1">
+        @((MarkupString)remarks)
+    </div>
+
+
+    @if (PhotoAlbum.Photos != null && PhotoAlbum.Photos.Count > 0)
+    {
+        @foreach (var item in PhotoAlbum.Photos)
+        {
+            <div class="mt-2">
+                <div class="viewPhotoCard">
+                    <div>
+                        <img src="@item.PhotoUrl" class="img-fluid viewPhoto" />
+                    </div>
+                    @if (item.Caption.Length > 1)
+                    {
+                        <div class="text-center pt-2">
+                            <h5>@item.Caption</h5>
+                        </div>
+                    }
+                    @if (item.PhotoDateStr.Length > 1)
+                    {
+                        <div class="text-center">
+                            @item.PhotoDateStr
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+        <ViewPhoneCommentsC Comments="Comments" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Key { get; set; }
+    private PhotoAlbumDTO PhotoAlbum { get; set; } = new PhotoAlbumDTO();
+    public List<PhotoDTO> Photos = new List<PhotoDTO>();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string remarks = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var photoAlbum = await photoAlbumRepository.GetPhotoAlbumByKey(Key);
+        PhotoAlbum = photoAlbum;
+        if (PhotoAlbum.Comments != null && PhotoAlbum.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<PhotoAlbumCommentDTO>, List<CommentDTO>>(PhotoAlbum.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        if (PhotoAlbum.Photos != null)
+        {
+            foreach (var vPhoto in PhotoAlbum.Photos)
+            {
+                var photo = new PhotoDTO
+                    {
+                        Caption = vPhoto.Caption,
+                        OrderBy = vPhoto.OrderBy,
+                        PhotoDate = vPhoto.PhotoDate,
+                        PhotoDateStr = vPhoto.PhotoDateStr,
+                        PhotoUrl = vPhoto.PhotoUrl
+                    };
+
+                Photos.Add(photo);
+            }
+        }
+
+        remarks = PhotoAlbum.Remarks;
+        remarks = remarks.Replace("<p>newColumn</p>", "");
+    }
+}

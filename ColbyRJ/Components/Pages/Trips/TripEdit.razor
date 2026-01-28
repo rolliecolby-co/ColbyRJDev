@@ -1,0 +1,356 @@
+﻿@page "/trip/edit/{TripId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject ITripRepository tripRepository
+@inject IFileUpload fileUpload
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <HeadingC Text="Edit Trip" />
+</div>
+
+<EditForm Model="Trip" OnValidSubmit="UpdateTrip">
+    <DataAnnotationsValidator />
+    <StatusMessageC MessageType="@MessageType" MessageBody="@MessageBody" />
+
+    @if (IsLoading)
+    {
+        <div>
+            <h5>Loading ...</h5>
+        </div>
+    }
+    else
+    {
+        <div class="row mt-3">
+            <div class="col">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label><b>Title</b></label>
+                            <InputText @bind-Value="Trip.Title" class="form-control"></InputText>
+                            <ValidationMessage For="() => Trip.Title"></ValidationMessage>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <label>Owner</label>
+                        <div class="divDisabled">
+                            @Trip.Owner
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <label>Grouped By</label>
+                        <div class="divDisabled">
+                            @Trip.GroupedBy
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-3 text-center">
+                            <a href="groupBy/edit/trip/@Trip.Id" class="btnEdit">Edit Grouped By</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <label>When</label>
+                        <div class="divDisabled">
+                            @Trip.YearMonth
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-3 text-center">
+                            <a href="yearMon/edit/trip/@Trip.Id" class="btnEdit">Edit Year Month</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col">
+                        <div class="form-group text-center">
+                            <label>Active</label> &nbsp
+                            <InputCheckbox @bind-Value="Trip.Active" class="form-check-input"></InputCheckbox>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="divDisabled text-center">
+                            @Trip.TripPhotos.Count Photo(s)
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="divDisabled text-center">
+                            @Trip.Comments.Count Comment(s)
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col">
+                        <div class="form-group text-center">
+                            <button class="btnSave">Save</button>
+                            <a href="trips" class="btnReturn ms-3">Return</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="alertInfo">
+                        Save after uploading photos and after any changes.
+                        <br />
+                        Also, Save any changes prior to Reviewing Photos or Reviewing Comments.
+                    </div>
+                    <div class="alertInfo mt-2">
+                        If you would like your long narrative displayed in 2 columns,
+                        enter newColumn in a new paragraph at the desired column break point.
+                        <br />
+                        And if you would like the narrative displayed in 3 columns,
+                        enter newColumn again in a new paragraph at the desired column break point.
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        @if (Trip.TripPhotos.Count > 0)
+                        {
+                            <div class="text-center">
+                                <a href="tripPhotos/@Trip.Id" class="btnReview">Review Photos</a>
+                            </div>
+                            <div class="alertInfo mt-3">
+                                To set the Order or Edit Captions
+                            </div>
+                        }
+                    </div>
+                    <div class="col">
+                        @if (Trip.Comments.Count > 0)
+                        {
+                            <div class="text-center">
+                                <a href="tripComments/@Trip.Id" class="btnReview">Review Comments</a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group">
+                    <label><b>Trip Note</b></label>
+                    <RZHtmlEditorLteC @bind-HtmlValue="@Trip.Note" Height="600px" />
+                    <ValidationMessage For="() => Trip.Note"></ValidationMessage>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="mb-2">Trip Photos</div>
+                <div class="form-group">
+                    <InputFile accept=".jpg,.jpeg,.png,.gif" OnChange="HandlePhotoUpload" multiple></InputFile>
+                    <div class="row">
+                        @if (IsImageUploadProcessStarted)
+                        {
+                            <div class="col-md-12">
+                                <span><i class="fa fa-spin fa-spinner"></i> Please wait.. Images are uploading...</span>
+                            </div>
+                        }
+                        @if (Trip.PhotoUrls != null && Trip.PhotoUrls.Count > 0)
+                        {
+                            int serial = 1;
+                            foreach (var photo in Trip.PhotoUrls)
+                            {
+                                <div class="col-3 mt-3">
+                                    <div class="photo-edit">
+                                        <img src="@photo" class="w-100" />
+                                        <span class="photo-edit-title">@serial</span>
+                                    </div>
+
+                                    <button type="button" @onclick="()=>DeletePhoto(photo)" class="btnDelete mt-4">
+                                        Delete
+                                    </button>
+                                </div>
+                                serial++;
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-6">
+                <div class="alertInfo">
+                    May upload multiple .jpg, .png and .gif files
+                    <br />
+                    Use ctrl key to select multiple files for upload, or upload 1 at a time
+                    <br />
+                    Max file size is 2 mb
+                    <br />
+                    Max upload size is 5 mb
+                    <br />
+                    Recommend reducing the image to less than 1 mb prior to uploading
+                </div>
+            </div>
+        </div>
+    }
+</EditForm>
+
+@code {
+    [Parameter] public int TripId { get; set; }
+    private TripDTO Trip { get; set; } = new TripDTO();
+
+    public bool IsProcessing { get; set; } = false;
+    public bool IsImageUploadProcessStarted { get; set; }
+    public bool IsLoading { get; set; } = true;
+    public string MessageType { get; set; }
+    public string MessageBody { get; set; }
+    public string Wysiwyg { get; set; }
+    private TripPhotoDTO TripPhoto { get; set; } = new TripPhotoDTO();
+    string imageType = "";
+    private long maxUploadSize = 1024 * 1024 * 5;
+    private long maxFileSize = 1024 * 1024 * 2;
+    bool errorFileSize = false;
+    bool errorUploadSize = false;
+    long uploadSize = 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLoading = true;
+
+        await GetTrip();
+
+        IsLoading = false;
+    }
+
+    private async Task GetTrip()
+    {
+        Trip = new TripDTO();
+
+        var trip = await tripRepository.GetTrip(TripId);
+        Trip = trip;
+
+        if (Trip?.TripPhotos != null)
+        {
+            Trip.PhotoUrls = Trip.TripPhotos
+                .Where(q => q.TripGroupId == null)
+                .Select(u => u.PhotoUrl)
+                .ToList();
+        }
+    }
+
+    private async Task UpdateTrip()
+    {
+        IsProcessing = true;
+        MessageType = "ok";
+        MessageBody = "";
+
+        var updateTripResult = await tripRepository.UpdateTrip(Trip);
+      
+        await GetTrip();
+
+        MessageBody = "Trip Updated";
+        IsProcessing = false;
+    }
+
+    private async Task HandlePhotoUpload(InputFileChangeEventArgs e)
+    {
+        IsProcessing = true;
+        MessageType = "";
+        MessageBody = "";
+        errorFileSize = false;
+        errorUploadSize = false;
+        uploadSize = 0;
+
+        if (e.GetMultipleFiles().Count > 0)
+        {
+            foreach (var file in e.GetMultipleFiles())
+            {
+                if (file.Size > maxFileSize)
+                {
+                    errorFileSize = true;
+                }
+                uploadSize += file.Size;
+                if (uploadSize > maxUploadSize)
+                {
+                    errorUploadSize = true;
+                }
+            }
+
+            if (errorFileSize == true || errorUploadSize == true)
+            {
+                MessageType = "error";
+                if (errorFileSize)
+                {
+                    MessageBody += "One or more of the uploaded files is larger than 2 mb.  ";
+                }
+                if (errorUploadSize)
+                {
+                    MessageBody += "Attempted to upload more than 5 mb.";
+                }
+            }
+            else
+            {
+                var photos = new List<string>();
+                foreach (var file in e.GetMultipleFiles())
+                {
+                    System.IO.FileInfo fileInfo = new System.IO.FileInfo(file.Name);
+
+                    if (fileInfo.Extension.ToLower() == ".jpeg")
+                    {
+                        imageType = "image/jpeg";
+                    }
+                    else if (fileInfo.Extension.ToLower() == ".jpg")
+                    {
+                        imageType = "image/jpg";
+                    }
+                    else if (fileInfo.Extension.ToLower() == ".png")
+                    {
+                        imageType = "image/png";
+                    }
+                    else if (fileInfo.Extension.ToLower() == ".gif")
+                    {
+                        imageType = "image/gif";
+                    }
+
+                    var imageFile = await file.RequestImageFileAsync(imageType, maxWidth: 1000, maxHeight: 750);
+
+                    var uploadedImage = await fileUpload.UploadFile(imageFile, "tripPhotos");
+                    var uploadedImagePath = $"tripPhotos/{uploadedImage}";
+
+                    photos.Add(uploadedImagePath);                    TripPhoto = new TripPhotoDTO()
+                        {
+                            TripId = TripId,
+                            PhotoUrl = uploadedImagePath
+                        };
+                    await tripRepository.CreatePhoto(TripPhoto);
+                }
+
+                if (photos.Any())
+                {
+                    if (Trip.PhotoUrls != null && Trip.PhotoUrls.Any())
+                    {
+                        Trip.PhotoUrls.AddRange(photos);
+                    }
+                    else
+                    {
+                        Trip.PhotoUrls = new List<string>();
+                        Trip.PhotoUrls.AddRange(photos);
+                    }
+                }
+            }
+        }
+
+        IsProcessing = false;
+    }
+
+    internal async void DeletePhoto(string photoUrl)
+    {
+        IsProcessing = true;
+        var photoIndex = Trip.PhotoUrls.FindIndex(x => x == photoUrl);
+        var photoName = photoUrl.ToLower();
+        photoName = photoName.Replace("tripphotos/", "");
+
+        var deleteResponse = fileUpload.DeleteFile(photoName, "tripPhotos");
+
+        await tripRepository.DeletePhotoByPhotoUrl(photoUrl);
+
+        Trip.PhotoUrls.RemoveAt(photoIndex);
+        IsProcessing = false;
+        StateHasChanged();
+    }
+}

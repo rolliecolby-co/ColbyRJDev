@@ -1,0 +1,108 @@
+﻿@page "/jobComments/{jobId:int}"
+
+@layout PostEditLayout
+
+
+@inject IJobRepository jobRepository
+@inject IJobCommentRepository jobCommentRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Job Comments: Home Job - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="job/edit/@JobId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (jobComments != null && jobComments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-4 pt-2 text-center">
+            Employer / Position
+        </div>
+        <div class="col-6">
+            <SubHeadingC Text="@jobStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in jobComments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteJobCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int JobId { get; set; }
+    private JobDTO Job { get; set; } = new JobDTO();
+    private List<JobCommentDTO> jobComments { get; set; } = new List<JobCommentDTO>();
+    private int DeleteJobCommentId { get; set; } = 0;
+    string jobStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var job = await jobRepository.GetJob(JobId);
+        Job = job;
+        jobStr = Job.Employer + " / " + Job.Position;
+
+        await LoadJobComments();
+    }
+
+    private async Task LoadJobComments()
+    {
+        var vJobComments = await jobCommentRepository.GetComments(JobId);
+        jobComments = vJobComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await jobCommentRepository.Delete(DeleteJobCommentId);
+            DeleteDialogOpen = false;
+            await LoadJobComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteJobCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteJobCommentId = id;
+        Text = "Do you want to delete this Job Comment?";
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,170 @@
+﻿@page "/jobs"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IJobRepository jobRepository
+
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2">
+        <HeadingC Text="Job History" />
+    </div>
+    <div class=" mb-2 text-center" style="width: 200px;">
+        <a href="job/add" class="btnAdd">Add New Job</a>
+    </div>
+</div>
+
+@if (jobs != null && jobs.Any())
+{
+    whoPrev = "zzz";
+    <div class="row mt-1">
+        <div class="col">
+            <div class="sectionHeader">
+                Select For Whom
+            </div>
+        </div>
+        <div class="col-md-10">
+            @foreach (var itemJ in jobs)
+            {
+                if (whoPrev != itemJ.Who)
+                {
+                    var btnCSS = "";
+                    if (selectedWho == itemJ.Who)
+                    {
+                        btnCSS = "selectedWho";
+                    }
+                    <span class="ms-3 mb-2">
+                        <button class="btnWho @btnCSS"
+                    onclick="@(() => SelectedWho(itemJ.Who))">
+                            @itemJ.Who
+                        </button>
+                    </span>
+                    whoPrev = itemJ.Who;
+                }
+            }
+        </div>
+    </div>
+}
+
+@if (SelectedJobs != null && SelectedJobs.Any())
+{
+    <div class="row mt-2">
+        <div class="col ">
+            <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@SelectedJobs" TItem="JobDTO"
+                            PagerHorizontalAlign="HorizontalAlign.Center">
+                <Columns>
+                    <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="Employer" Title="Employer" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="Position" Title="Position" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="WithRemarks" Title="With Remarks" Width="100px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="CommentCount" Title="Comments" Width="140px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+
+                    <RadzenDataGridColumn Property="Id" Width="70px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            @{
+                                var link = "job/edit/" + data.Id;
+                            }
+                            <RadzenLink Path=@link Text="Edit" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Id" Width="70px" HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                          Click=@(() => DeleteJob(data.Id)) />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<JobDTO> jobs { get; set; } = new List<JobDTO>();
+    private List<JobDTO> SelectedJobs { get; set; } = new List<JobDTO>();
+    private string whoPrev = "zzz";
+    private string selectedWho = "";
+    public bool IsLoading { get; set; }
+    private int DeleteJobId { get; set; } = 0;
+    public string userEmail = "";
+    public string userRole = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadJobs();
+
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var user = authstate.User;
+        userEmail = user.Identity.Name;
+        var appUser = await appUserRepository.GetUserByEmail(userEmail);
+        if (appUser != null)
+        {
+            userRole = appUser.Role;
+        }
+    }
+
+    private async Task LoadJobs()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        var result = await jobRepository.GetJobs();
+        jobs = result.ToList();
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    async Task DeleteJob(int Id)
+    {
+        OpenDeleteJobDialog(Id);
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await jobRepository.Delete(DeleteJobId);
+            DeleteDialogOpen = false;
+            await LoadJobs();
+            SelectedJobs = jobs.Where(q => q.Who == selectedWho).ToList();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteJobDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteJobId = id;
+        Text = $"Do you want to delete this Job?";
+        StateHasChanged();
+    }
+
+    private void SelectedWho(string who)
+    {
+        selectedWho = who;
+
+        SelectedJobs = jobs.Where(q => q.Who == who).ToList();
+
+        StateHasChanged();
+    }
+
+}

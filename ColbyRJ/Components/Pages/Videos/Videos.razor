@@ -1,0 +1,144 @@
+﻿@page "/videos"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IVideoRepository videoRepository
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2">
+        <HeadingC Text="Videos" />
+    </div>
+    <div class="col mb-2">
+        @if (groupedBy != null && groupedBy.Count > 0)
+        {
+            <select value="@selectedGroupBy" class="form-select" @onchange="OnGroupByChanged">
+                <option value="">-- Filter By Grouping --</option>
+                @foreach (var item in groupedBy)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        }
+    </div>
+    <div class="mb-2 text-center" style="width: 200px;">
+        <a href="video/add" class="btnAdd">Add New Video</a>
+    </div>
+</div>
+
+@if (videos != null && videos.Any())
+{
+    <div class="row ">
+        <div class="col mt-2">
+            <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@videos" TItem="VideoDTO"
+                            PagerHorizontalAlign="HorizontalAlign.Center">
+                <Columns>
+                    <RadzenDataGridColumn Property="GroupedBy" Title="Grouped By" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="Title" Title="Title" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="CommentCount" Title="Comments" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="ActiveStr" Title="Active" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+
+                    <RadzenDataGridColumn Property="Id" Width="70px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            @{
+                                var link = "video/edit/" + data.Id;
+                            }
+                            <RadzenLink Path=@link Text="Edit" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Id" Width="70px" HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                          Click=@(() => DeleteVideo(data.Id)) />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<VideoDTO> videos { get; set; } = new List<VideoDTO>();
+    private List<VideoDTO> allVideos { get; set; } = new List<VideoDTO>();
+    private int DeleteVideoId { get; set; } = 0;
+    private string groupedByPrev = "zzz";
+    private List<string> groupedBy;
+    private string userEmail = "";
+    private string userRole = "";
+    string selectedGroupBy = "";
+    string selectedDecade = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVideos();
+
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var user = authstate.User;
+        userEmail = user.Identity.Name;
+        var appUser = await appUserRepository.GetUserByEmail(userEmail);
+        if (appUser != null)
+        {
+            userRole = appUser.Role;
+        }
+    }
+
+    private async Task LoadVideos()
+    {
+        var tVideos = await videoRepository.GetVideos();
+        allVideos = tVideos.ToList();
+
+        groupedBy = allVideos.OrderBy(q => q.GroupedBy).Select(q => q.GroupedBy).ToList();
+        groupedBy = groupedBy.AsQueryable().Distinct().ToList();
+    }
+
+    async Task DeleteVideo(int Id)
+    {
+        OpenDeleteVideoDialog(Id);
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await videoRepository.Delete(DeleteVideoId);
+            DeleteDialogOpen = false;
+            await LoadVideos();
+            videos = new List<VideoDTO>();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteVideoDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteVideoId = id;
+        Text = "Do you want to delete this Video?";
+        StateHasChanged();
+    }
+
+    private void OnGroupByChanged(ChangeEventArgs e)
+    {
+        selectedGroupBy = e.Value.ToString();
+        videos = allVideos.Where(q => q.GroupedBy == selectedGroupBy).ToList();
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,380 @@
+﻿@page "/address/edit/{addressId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IHttpContextAccessor httpContext
+@inject IAddressRepository addressRepository
+@inject IAddressPhotoRepository addressPhotoRepository
+@inject IAppUserRepository appUserRepository
+@inject IFileUpload fileUpload
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<HeadingC Text="Update Home Address" />
+
+<EditForm Model="@Address" OnValidSubmit="UpdateAddress">
+    <DataAnnotationsValidator />
+    <StatusMessageC MessageType="@MessageType" MessageBody="@MessageBody" />
+
+    <div class="row mt-3">
+        <div class="col">
+            <div class="row">
+                <div class="col-8">
+                    <div class="form-group">
+                        <label>For Whom</label>
+                        <InputSelect @bind-Value="@Address.Who" class="form-select">
+                            <option value=0 selected>-- Select For Whom --</option>
+                            @foreach (var w in who)
+                            {
+                                <option value="@w.Who">@w.Who</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Address.Who"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group mt-2">
+                        <label>Start Date</label>
+                        <div>
+                            <InputDate @bind-Value="@Address.StartDate" class="form-control" />
+                            <ValidationMessage For="@(() => Address.StartDate)" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <label>When</label>
+                    <div class="divDisabled">
+                        @Address.YearMonth
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="p-3 text-center">
+                        <a href="yearMon/edit/address/@Address.Id" class="btnEdit">Edit Year Month</a>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group mt-2">
+                <label>Home Address</label>
+                <div>
+                    <InputText @bind-Value="@Address.HomeAddress" class="form-control" />
+                    <ValidationMessage For="@(() => Address.HomeAddress)" />
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col text-center">
+                    @if (Address.Photos == null)
+                    {
+                        <div class="divDisabled">
+                            0 Photos
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="divDisabled">
+                            @Address.Photos.Count Photo(s)
+                        </div>
+                    }
+                </div>
+                <div class="col text-center">
+                    @if (Address.Comments == null)
+                    {
+                        <div class="divDisabled">
+                            0 Comments
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="divDisabled">
+                            @Address.Comments.Count Comment(s)
+                        </div>
+                    }
+                </div>
+                <div class="col-6">
+                    <div class="text-center">
+                        <button type="submit" class="btnSave">
+                            Save
+                        </button>
+                        <a href="addresses" class="btnReturn ms-3">Return</a>
+                    </div>
+                </div>
+            </div>
+            <div class="alertInfo">
+                Save after uploading audio, uploading photos and after any changes.
+                <br />
+                Also, Save any changes prior to Reviewing Photos or Reviewing Comments.
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    @if (Address.Photos != null && Address.Photos.Count > 0)
+                    {
+                        <div class="text-center">
+                            <a href="addressPhotos/@Address.Id" class="btnReview">Review Photos</a>
+                        </div>
+                        <div class="alertInfo mt-3">
+                            To set the Order, to Edit Captions or to Edit Photo Dates
+                        </div>
+                    }
+                </div>
+                <div class="col">
+                    @if (Address.Comments != null && Address.Comments.Count > 0)
+                    {
+                        <div class="text-center">
+                            <a href="addressComments/@Address.Id" class="btnReview">Review Comments</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-5">
+            <div class="form-group">
+                <label>Remarks</label>
+                <RZHtmlEditorMinC @bind-HtmlValue="@Address.Remarks" Height="500px" />
+            </div>
+            <div class="alert alert-info mt-2">
+                If you would like your long narrative displayed in 2 columns,
+                enter newColumn in a new paragraph at the desired column break point.
+                <br />
+                And if you would like the narrative displayed in 3 columns,
+                enter newColumn again in a new paragraph at the desired column break point.
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        <div class="col-12">
+            <div>Home Address Photos</div>
+            <div class="form-group">
+                <InputFile accept=".jpg,.jpeg,.png,.gif" OnChange="HandlePhotoUpload" multiple></InputFile>
+                <div class="row">
+                    @if (IsImageUploadProcessStarted)
+                    {
+                        <div class="col-md-12">
+                            <span><i class="fa fa-spin fa-spinner"></i> Please wait.. Images are uploading...</span>
+                        </div>
+                    }
+                    @if (Address.PhotoUrls != null && Address.PhotoUrls.Count > 0)
+                    {
+                        int serial = 1;
+                        foreach (var photo in Address.PhotoUrls)
+                        {
+                            <div class="col-3 mt-3">
+                                <div class="photo-edit">
+                                    <img src="@photo" class="w-100" />
+                                    <span class="photo-edit-title">@serial</span>
+                                </div>
+
+                                <button type="button" @onclick="()=>DeletePhoto(photo)" class="btnDelete mt-4">
+                                    Delete
+                                </button>
+                            </div>
+                            serial++;
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-6">
+            <div class="alertInfo">
+                May upload multiple .jpg, .png and .gif files
+                <br />
+                Use ctrl key to select multiple files for upload, or upload 1 at a time
+                <br />
+                Max file size is 2 mb
+                <br />
+                Max upload size is 5 mb
+                <br />
+                Recommend reducing the image to less than 1 mb prior to uploading
+            </div>
+        </div>
+    </div>
+
+</EditForm>
+
+@code {
+    [Parameter] public int AddressId { get; set; }
+    AddressDTO Address = new AddressDTO();
+    List<WhoDTO> who = new List<WhoDTO>();
+    public bool IsProcessing { get; set; } = false;
+    public bool IsImageUploadProcessStarted { get; set; }
+    public bool IsLoading { get; set; } = true;
+    public string MessageType { get; set; }
+    public string MessageBody { get; set; }
+    private AddressPhotoDTO AddressPhoto { get; set; } = new AddressPhotoDTO();
+    string imageType = "";
+    private long maxUploadSize = 1024 * 1024 * 5;
+    private long maxFileSize = 1024 * 1024 * 2;
+    bool errorFileSize = false;
+    bool errorUploadSize = false;
+    long uploadSize = 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await GetAddress();
+
+        var tWho = await appUserRepository.GetWho("all");
+        who = tWho.ToList();
+    }
+
+    private async Task GetAddress()
+    {
+        Address = new AddressDTO();
+
+        var address = await addressRepository.GetAddress(AddressId);
+        Address = address;
+        if (Address?.Photos != null)
+        {
+            Address.PhotoUrls = Address.Photos.Select(u => u.PhotoUrl).ToList();
+        }
+
+        IsProcessing = false;
+    }
+
+    private async Task UpdateAddress()
+    {
+        IsProcessing = true;
+        MessageType = "";
+        MessageBody = "";
+
+        var updateAddressResult = await addressRepository.Update(Address);       
+
+        await GetAddress();
+
+        MessageType = "ok";
+        MessageBody = "Address Updated";
+        IsProcessing = false;
+        StateHasChanged();
+    }
+
+    private async Task HandlePhotoUpload(InputFileChangeEventArgs e)
+    {
+        IsProcessing = true;
+        MessageType = "";
+        MessageBody = "";
+        errorFileSize = false;
+        errorUploadSize = false;
+        uploadSize = 0;
+
+        if (e.GetMultipleFiles().Count > 0)
+        {
+            foreach (var file in e.GetMultipleFiles())
+            {
+                if (file.Size > maxFileSize)
+                {
+                    errorFileSize = true;
+                }
+                uploadSize += file.Size;
+                if (uploadSize > maxUploadSize)
+                {
+                    errorUploadSize = true;
+                }
+            }
+
+            if (errorFileSize == true || errorUploadSize == true)
+            {
+                MessageType = "error";
+                if (errorFileSize)
+                {
+                    MessageBody += "One or more of the uploaded files is larger than 2 mb.  ";
+                }
+                if (errorUploadSize)
+                {
+                    MessageBody += "Attempted to upload more than 5 mb.";
+                }
+            }
+            else
+            {
+                var photos = new List<string>();
+                foreach (var file in e.GetMultipleFiles())
+                {
+                    System.IO.FileInfo fileInfo = new System.IO.FileInfo(file.Name);
+
+                    if (fileInfo.Extension.ToLower() == ".jpeg")
+                    {
+                        imageType = "image/jpeg";
+                    }
+                    else if (fileInfo.Extension.ToLower() == ".jpg")
+                    {
+                        imageType = "image/jpg";
+                    }
+                    else if (fileInfo.Extension.ToLower() == ".png")
+                    {
+                        imageType = "image/png";
+                    }
+                    else if (fileInfo.Extension.ToLower() == ".gif")
+                    {
+                        imageType = "image/gif";
+                    }
+
+                    var imageFile = await file.RequestImageFileAsync(imageType, maxWidth: 1000, maxHeight: 750);
+
+                    var uploadedImage = await fileUpload.UploadFile(imageFile, "addressPhotos");
+                    var uploadedImagePath = $"addressPhotos/{uploadedImage}";
+
+                    photos.Add(uploadedImagePath);
+
+                    AddressPhoto = new AddressPhotoDTO()
+                        {
+                            AddressHistoryId = AddressId,
+                            PhotoUrl = uploadedImagePath
+                        };
+                    await addressPhotoRepository.Create(AddressPhoto);
+                }
+
+                if (photos.Any())
+                {
+                    if (Address.PhotoUrls != null && Address.PhotoUrls.Any())
+                    {
+                        Address.PhotoUrls.AddRange(photos);
+                    }
+                    else
+                    {
+                        Address.PhotoUrls = new List<string>();
+                        Address.PhotoUrls.AddRange(photos);
+                    }
+                }
+            }
+        }
+
+        IsProcessing = false;
+        StateHasChanged();
+    }
+
+    private async Task AddAddressPhoto(AddressDTO addressDTO)
+    {
+        IsProcessing = true;
+        foreach (var photoUrl in Address.PhotoUrls)
+        {
+            if (Address.Photos == null || Address.Photos.Where(x => x.PhotoUrl == photoUrl).Count() == 0)
+            {
+                AddressPhoto = new AddressPhotoDTO()
+                    {
+                        AddressHistoryId = addressDTO.Id,
+                        PhotoUrl = photoUrl
+                    };
+                await addressPhotoRepository.Create(AddressPhoto);
+            }
+        }
+        IsProcessing = false;
+    }
+
+    internal async void DeletePhoto(string photoUrl)
+    {
+        IsProcessing = true;
+        var photoIndex = Address.PhotoUrls.FindIndex(x => x == photoUrl);
+        var photoName = photoUrl.ToLower();
+        photoName = photoName.Replace("addressphotos/", "");
+
+        var deleteResponse = fileUpload.DeleteFile(photoName, "addressPhotos");
+
+        await addressPhotoRepository.DeletePhotoByPhotoUrl(photoUrl);
+
+        Address.PhotoUrls.RemoveAt(photoIndex);
+        IsProcessing = false;
+        StateHasChanged();
+    }
+}

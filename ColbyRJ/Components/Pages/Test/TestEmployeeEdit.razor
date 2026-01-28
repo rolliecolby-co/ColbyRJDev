@@ -1,0 +1,51 @@
+﻿@page "/testEmployeeEdit"
+
+@layout PostEditLayout
+
+
+<div class="row">
+    <HeadingC Text="Test Employee Edit" />
+</div>
+
+<EditForm Model="Employee" OnValidSubmit="UpdateEmployee">
+    <DataAnnotationsValidator />
+    <div class="row mt-3">
+        <div class="col"></div>
+        <div class="col-4">
+            <div class="form-group">
+                <label>Email</label>
+                <InputText @bind-Value="Employee.Email" class="form-control"></InputText>
+                <ValidationMessage For="() => Employee.Email"></ValidationMessage>
+            </div>
+            <div class="form-group mt-2">
+                <label>Name</label>
+                <InputText @bind-Value="Employee.Name" class="form-control"></InputText>
+                <ValidationMessage For="() => Employee.Name"></ValidationMessage>
+            </div>
+            <div class="form-group mt-2">
+                <label>Remarks</label>
+                <RZHtmlEditorFullC @bind-HtmlValue="@Employee.Remarks" Height="200px" />
+                <ValidationMessage For="() => Employee.Remarks"></ValidationMessage>
+            </div>
+            <div class="form-group text-center mt-3">
+                <button class="btnSave">Save</button>
+            </div>
+        </div>
+        <div class="col"></div>
+    </div>
+</EditForm>
+
+
+<p>
+    Edit Status: @editStatus
+</p>
+@code {
+    private Employee Employee { get; set; } = new Employee();
+    string editStatus = string.Empty;
+
+
+    private async Task UpdateEmployee()
+    {
+        editStatus = "ok";
+    }
+}

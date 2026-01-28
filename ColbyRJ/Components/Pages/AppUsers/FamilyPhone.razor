@@ -1,0 +1,49 @@
+﻿@page "/phoneFamily"
+@rendermode InteractiveServer
+
+@layout PhoneLayout
+
+@inject IAppUserRepository userRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="">
+    <HeadingC Text="Family" />
+</div>
+
+<div class="mt-2">
+    <RadzenDataGrid Data="@family" TItem="AppUserDTO"
+                    PagerHorizontalAlign="HorizontalAlign.Center">
+        <Columns>
+            <RadzenDataGridColumn Property="Name" Title="Name" HeaderCssClass="rz-background-color-info-lighter" />
+            <RadzenDataGridColumn Property="DisplayName" Title="Display Name" HeaderCssClass="rz-background-color-info-lighter" />
+            <RadzenDataGridColumn Property="Id" Width="80px" TextAlign="TextAlign.Center"
+                                  HeaderCssClass="rz-background-color-info-lighter">
+                <Template Context="data">
+                    @{
+                        var link = "phoneFamily/" + data.Id;
+                    }
+                    <RadzenLink Path=@link Text="View" Target="_family" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+@code {
+    private List<AppUserDTO> family;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFamily();
+    }
+
+    private async Task LoadFamily()
+    {
+        var tUsers = await userRepository.GetUsers();
+        family = tUsers.ToList();
+
+        StateHasChanged();
+    }
+}

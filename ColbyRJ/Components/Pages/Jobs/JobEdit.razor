@@ -1,0 +1,138 @@
+﻿@page "/job/edit/{jobId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IHttpContextAccessor httpContext
+@inject IJobRepository jobRepository
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col">
+        <HeadingC Text="Update Job" />
+    </div>
+</div>
+
+<EditForm Model="@Job" OnValidSubmit="UpdateJob">
+    <DataAnnotationsValidator />
+
+    <div class="row mt-3">
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <div class="form-group ">
+                        <label>For Whom</label>
+                        <div class="divDisabled">
+                            @Job.Who
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <div>
+                            <InputDate @bind-Value="@Job.StartDate" class="form-control" />
+                            <ValidationMessage For="@(() => Job.StartDate)" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <label>When</label>
+                    <div class="divDisabled">
+                        @Job.YearMonth
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="p-3 text-center">
+                        <a href="yearMon/edit/job/@Job.Id" class="btnEdit">Edit Year Month</a>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Employer</label>
+                        <div>
+                            <InputText @bind-Value="@Job.Employer" class="form-control" />
+                            <ValidationMessage For="@(() => Job.Employer)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label>Position</label>
+                        <div>
+                            <InputText @bind-Value="@Job.Position" class="form-control" />
+                            <ValidationMessage For="@(() => Job.Position)" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    @if (Job.Comments != null)
+                    {
+                        <div class="divDisabled">
+                            @Job.Comments.Count Comment(s)
+                        </div>
+
+                        @if (Job.Comments.Count > 0)
+                        {
+                            <div class="mt-3 text-center">
+                                <a href="jobComments/@Job.Id" class="btnReview">Review Comments</a>
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="col">
+                    <div class="text-center">
+                        <button type="submit" class="btnUpdate">
+                            Update Job
+                        </button>
+                        <a href="jobs" class="btnReturn ms-3">Return</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-5">
+            <div class="form-group">
+                <label>Remarks</label>
+                <RZHtmlEditorMinC @bind-HtmlValue="@Job.Remarks" Height="500px" />
+            </div>
+            <div class="alert alert-info mt-2">
+                If you would like your long narrative displayed in 2 columns,
+                enter newColumn in a new paragraph at the desired column break point.
+                <br />
+                And if you would like the narrative displayed in 3 columns,
+                enter newColumn again in a new paragraph at the desired column break point.
+            </div>
+        </div>
+    </div>
+
+</EditForm>
+
+@code {
+    [Parameter] public int JobId { get; set; }
+    List<WhoDTO> who = new List<WhoDTO>();
+    JobDTO Job = new JobDTO();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var job = await jobRepository.GetJob(JobId);
+        Job = job;
+
+        var tWho = await appUserRepository.GetWho("ind");
+        who = tWho.ToList();
+    }
+
+    private async Task UpdateJob()
+    {
+        var addResult = await jobRepository.Update(Job);
+        navManager.NavigateTo("jobs");
+    }
+}

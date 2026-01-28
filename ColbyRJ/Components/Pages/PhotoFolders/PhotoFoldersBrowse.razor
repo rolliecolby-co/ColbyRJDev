@@ -1,0 +1,131 @@
+﻿@page "/browsePhotoFolders"
+@rendermode InteractiveServer
+
+@layout BrowseLayout
+
+@inject IPhotoFolderRepository photoFolderRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2 ">
+        <HeadingC Text="Photo Folders" />
+    </div>
+    <div class="col mb-2 ">
+        @if (groupedBy != null && groupedBy.Count > 0)
+        {
+            <select value="@selectedGroupBy" class="form-select" @onchange="OnGroupByChanged">
+                <option value="">-- Filter By Grouping --</option>
+                @foreach (var item in groupedBy)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        }
+    </div>
+    <div class="col mb-2 ">
+        @if (decades != null && decades.Count > 0)
+        {
+            <select value="@selectedDecade" class="form-select" @onchange="OnDecadeChanged">
+                <option value="">-- Filter By Decade --</option>
+                @foreach (var item in decades)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        }
+    </div>
+</div>
+
+@if (showList)
+{
+    <div class="row mt-2">
+        <div class="col">
+            @foreach (var folder in PhotoFolders)
+            {
+                <div class="m-2" style="float: left;">
+                    <a href="photoFolder/@folder.Key" class="btnList" target="_photoFolder">@folder.Title</a>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (photoFolders != null && photoFolders.Count > 0)
+{
+    <div class="row ">
+        <div class="col mt-2">
+            <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@photoFolders" TItem="PhotoFolderDTO"
+                            PagerHorizontalAlign="HorizontalAlign.Center">
+                <Columns>
+                    <RadzenDataGridColumn Property="GroupedBy" Title="Grouped By" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="Title" Title="Title" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="PhotoCount" Title="Photo Count" Width="110px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="CommentCount" Title="Comment Count" Width="110px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="Id" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            @{
+                                var link = "photoFolder/" + data.Key;
+                            }
+                            <RadzenLink Path=@link Text="View" Target="_photoFolder" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+}
+
+@code {
+    private List<PhotoFolderDTO> photoFolders;
+    private List<PhotoFolderDTO> allPhotoFolders;
+    private List<PhotoFolderDTO> PhotoFolders = new List<PhotoFolderDTO>();
+    private List<string> groupedBy;
+    private List<string> decades;
+    string selectedGroupBy = "";
+    string selectedDecade = "";
+    bool showList = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPhotoFolders();
+
+        PhotoFolders = allPhotoFolders.OrderBy(o => o.Title).ToList();
+
+        groupedBy = allPhotoFolders.OrderBy(q => q.GroupedBy).Select(q => q.GroupedBy).ToList();
+        groupedBy = groupedBy.AsQueryable().Distinct().ToList();
+
+        decades = allPhotoFolders.OrderBy(q => q.Decade).Select(q => q.Decade).ToList();
+        decades = decades.AsQueryable().Distinct().ToList();
+    }
+
+    private async Task LoadPhotoFolders()
+    {
+        var tPhotoFolders = await photoFolderRepository.GetActivePhotoFolders();
+        allPhotoFolders = tPhotoFolders.ToList();
+    }
+
+    private void OnGroupByChanged(ChangeEventArgs e)
+    {
+        showList = false;
+        selectedDecade = "";
+        selectedGroupBy = e.Value.ToString();
+        photoFolders = allPhotoFolders.Where(q => q.GroupedBy == selectedGroupBy).ToList();
+        StateHasChanged();
+    }
+
+    private void OnDecadeChanged(ChangeEventArgs e)
+    {
+        showList = false;
+        selectedGroupBy = "";
+        selectedDecade = e.Value.ToString();
+        photoFolders = allPhotoFolders.Where(q => q.Decade == selectedDecade).ToList();
+        StateHasChanged();
+    }
+}

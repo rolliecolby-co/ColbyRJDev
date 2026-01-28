@@ -1,0 +1,242 @@
+﻿@page "/stories"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IStoryRepository storyRepository
+@inject IStoryChapterRepository storyChapterRepository
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2">
+        <HeadingC Text="Stories" />
+    </div>
+    <div class="col mb-2">
+        @if (groupedBy != null && groupedBy.Count > 0)
+        {
+            <select value="@selectedGroupBy" class="form-select" @onchange="OnGroupByChanged">
+                <option value="">-- Filter By Grouping --</option>
+                @foreach (var item in groupedBy)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        }
+    </div>
+    <div class="mb-2 text-center" style="width: 200px;">
+        <a href="story/add" class="btnAdd">Add New Story</a>
+    </div>
+</div>
+
+@if (stories != null && stories.Any())
+{
+    <div class="row ">
+        <div class="col mt-2">
+            <RadzenDataGrid AllowPaging="true" PageSize="10"
+                            Data="@stories" TItem="StoryDTO">
+                <Template Context="story">
+                    <RadzenTabs>
+                        <Tabs>
+                            <RadzenTabsItem Text="Chapters">
+                                <RadzenDataGrid AllowPaging="true" Data="@story.Chapters" PageSize="10">
+                                    <Columns>
+                                        <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                                              HeaderCssClass="rz-background-color-warning-lighter" />
+                                        <RadzenDataGridColumn Property="Title" Title="Title" HeaderCssClass="rz-background-color-warning-lighter" />
+                                        <RadzenDataGridColumn Property="PhotoCount" Title="Photos" Width="80px" TextAlign="TextAlign.Center"
+                                                              HeaderCssClass="rz-background-color-warning-lighter" />
+                                        <RadzenDataGridColumn Property="CommentCount" Title="Comments" Width="80px" TextAlign="TextAlign.Center"
+                                                              HeaderCssClass="rz-background-color-warning-lighter" />
+
+                                        <RadzenDataGridColumn Property="Id" Width="70px" TextAlign="TextAlign.Center"
+                                                              HeaderCssClass="rz-background-color-warning-lighter">
+                                            <Template Context="data">
+                                                @{
+                                                    var link = "storyChapter/edit/" + data.Id;
+                                                }
+                                                <RadzenLink Path=@link Text="Edit" />
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn Property="Id" Width="70px"
+                                                              HeaderCssClass="rz-background-color-warning-lighter">
+                                            <Template Context="data">
+                                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                                              Click=@(() => DeleteChapter(data.Id)) />
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            </RadzenTabsItem>
+                        </Tabs>
+                    </RadzenTabs>
+                </Template>
+                <Columns>
+                    <RadzenDataGridColumn Property="GroupedBy" Title="Grouped By" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="Title" Title="Title" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="PhotoCount" Title="Photos" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="CommentCount" Title="Comments" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="ChapterCount" Title="Chapters" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+
+                    <RadzenDataGridColumn Property="Id" Width="120px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            @{
+                                var link = "storyChapter/add/" + data.Id;
+                            }
+                            <RadzenLink Path=@link Text="Add Chapter" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Id" Width="70px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            @{
+                                var link = "story/edit/" + data.Id;
+                            }
+                            <RadzenLink Path=@link Text="Edit" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Id" Width="70px"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                          Click=@(() => DeleteStory(data.Id)) />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<StoryDTO> stories { get; set; } = new List<StoryDTO>();
+    private List<StoryDTO> allStories { get; set; } = new List<StoryDTO>();
+    private List<StoryChapterDTO> Chapters { get; set; } = new List<StoryChapterDTO>();
+    private int DeleteStoryId { get; set; } = 0;
+    private int DeleteStoryChapterId { get; set; } = 0;
+    private string groupedByPrev = "zzz";
+    private List<string> groupedBy;
+    private string userEmail = "";
+    private string userRole = "";
+    string selectedGroupBy = "";
+    string selectedDecade = "";
+    int expandStoryId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStories();
+        await LoadChapters();
+
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var user = authstate.User;
+        userEmail = user.Identity.Name;
+        var appUser = await appUserRepository.GetUserByEmail(userEmail);
+        if (appUser != null)
+        {
+            userRole = appUser.Role;
+        }
+    }
+
+    private async Task LoadStories()
+    {
+        var tStories = await storyRepository.GetStories();
+        allStories = tStories.ToList();
+
+        groupedBy = allStories.OrderBy(q => q.GroupedBy).Select(q => q.GroupedBy).ToList();
+        groupedBy = groupedBy.AsQueryable().Distinct().ToList();
+    }
+
+    private async Task LoadChapters()
+    {
+        var tChapters = await storyChapterRepository.GetChapters();
+        Chapters = tChapters.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            if (DeleteStoryId > 0)
+            {
+                await storyRepository.Delete(DeleteStoryId);
+            }
+            if (DeleteStoryChapterId > 0)
+            {
+                await storyChapterRepository.Delete(DeleteStoryChapterId);
+            }
+            DeleteDialogOpen = false;
+            navManager.NavigateTo($"/stories", true);
+        }
+        DeleteDialogOpen = false;
+        DeleteStoryId = 0;
+        DeleteStoryChapterId = 0;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteStoryDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteStoryId = id;
+        DeleteStoryChapterId = 0;
+        Text = "Do you want to delete this Story?";
+        StateHasChanged();
+    }
+
+    private void OpenDeleteStoryChapterDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteStoryId = 0;
+        DeleteStoryChapterId = id;
+        Text = "Do you want to delete this Story Chapter?";
+        StateHasChanged();
+    }
+
+    private void OnGroupByChanged(ChangeEventArgs e)
+    {
+        selectedGroupBy = e.Value.ToString();
+        stories = allStories.Where(q => q.GroupedBy == selectedGroupBy).ToList();
+        StateHasChanged();
+    }
+
+    async Task DeleteStory(int Id)
+    {
+        OpenDeleteStoryDialog(Id);
+    }
+
+    async Task DeleteChapter(int Id)
+    {
+        OpenDeleteStoryChapterDialog(Id);
+    }
+
+    void EditStory(int Id)
+    {
+        navManager.NavigateTo($"/story/edit/{Id}");
+    }
+
+    void EditChapter(int Id)
+    {
+        navManager.NavigateTo($"/storyChapter/edit/{Id}");
+    }
+
+    private void ExpandStory(int id)
+    {
+        expandStoryId = id;
+        StateHasChanged();
+    }
+}

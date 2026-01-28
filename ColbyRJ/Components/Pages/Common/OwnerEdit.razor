@@ -1,0 +1,132 @@
+﻿@page "/owner/edit/{element}/{id:int}"
+
+@layout PostEditLayout
+
+@inject IAppUserRepository userRepository
+@inject IPhotoFolderRepository photoFolderRepository
+@inject IVideoRepository videoRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <HeadingC Text="@pageHeading" />
+</div>
+<div class="row mt-3">
+    <div class="col"></div>
+    <div class="col-10">
+        <SubHeadingC Text="@elementTitle" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-2">
+    <div class="col"></div>
+    <div class="col-8">
+        <EditForm Model="Owner" OnValidSubmit="UpdateOwner">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Owner - Select an Owner</label>
+                        <InputSelect Value="@owner"
+                                     ValueChanged="@((string value) => OwnerChanged(value))"
+                                     ValueExpression="@(() => owner)"
+                                     class="form-select">
+                            @foreach (var own in Owners)
+                            {
+                                <option value="@own.Owner">@own.Owner</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <div class="form-group text-center">
+                        <button class="btnUpdate">Update</button>
+                        <a href="@returnUrl" class="btnReturn ms-3">Return</a>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    [Parameter] public string Element { get; set; }
+    [Parameter] public int Id { get; set; }
+    string pageHeading = "";
+    string elementTitle = "";
+    string returnUrl = "";
+    private OwnerEditDTO Owner { get; set; } = new OwnerEditDTO();
+
+    private PhotoFolderDTO PhotoFolder { get; set; } = new PhotoFolderDTO();
+    private VideoDTO Video { get; set; } = new VideoDTO();
+
+    private List<OwnerDTO> Owners { get; set; } = new List<OwnerDTO>();
+    string owner = "";
+    string ownerEmail = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var owners = await userRepository.GetOwners();
+        Owners = owners.ToList();
+
+        if (Element == "photoFolder")
+        {
+            var photoFolder = await photoFolderRepository.GetPhotoFolder(Id);
+            PhotoFolder = photoFolder;
+            pageHeading = "Edit Photo Folder Owner";
+            elementTitle = PhotoFolder.Title;
+            Owner.Id = Id;
+            returnUrl = "photoFolder/edit/" + Id.ToString();
+
+            owner = PhotoFolder.Owner.ToString();
+            Owner.Owner = owner;
+            ownerEmail = PhotoFolder.OwnerEmail.ToString();
+            Owner.OwnerEmail = ownerEmail;
+        }
+        else if (Element == "video")
+        {
+            var video = await videoRepository.GetVideo(Id);
+            Video = video;
+            pageHeading = "Edit Video Owner";
+            elementTitle = Video.Title;
+            Owner.Id = Id;
+            returnUrl = "video/edit/" + Id.ToString();
+
+            owner = Video.Owner.ToString();
+            Owner.Owner = owner;
+            ownerEmail = Video.OwnerEmail.ToString();
+            Owner.OwnerEmail = ownerEmail;
+        }
+
+    }
+
+    private async Task UpdateOwner()
+    {
+        if (Element == "photoFolder")
+        {
+            await photoFolderRepository.UpdateOwner(Owner);
+        }
+        else if (Element == "video")
+        {
+            await videoRepository.UpdateOwner(Owner);
+        }
+        navManager.NavigateTo(returnUrl);
+    }
+
+    private async void OwnerChanged(string value)
+    {
+        owner = value;
+        Owner.Owner = owner;
+
+        var vOwner = Owners.FirstOrDefault(q => q.Owner == owner);
+
+        Owner.OwnerEmail = vOwner.OwnerEmail;
+
+        StateHasChanged();
+    }
+}

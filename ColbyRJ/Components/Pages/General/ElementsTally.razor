@@ -1,0 +1,114 @@
+﻿@page "/elementsTally"
+
+@layout PostEditLayout
+
+@inject IBaseRepository baseRepository
+
+<div class="row ">
+    <div class="col mb-2">
+        <HeadingC Text="Elements, by Grouping" />
+    </div>
+</div>
+
+@if (elements != null && elements.Any())
+{
+    <div class="row">
+        <div class="" style="width: 50px;">
+            &nbsp;
+        </div>
+        <div class="" style="width: 200px;">
+            <b>Element</b>
+        </div>
+        <div class="" style="width: 150px;">
+            <b>Year - Month</b>
+        </div>
+        <div class="col">
+            <b>Title</b>
+        </div>
+        <div class="" style="width: 150px;">
+            <b>Photos</b>
+        </div>
+        <div class="" style="width: 150px;">
+            <b>Owner</b>
+        </div>
+        <div class="col">
+        </div>
+    </div>
+    groupedByPrev = "zzz";
+    <div class="row">
+        <div class="col">
+            @foreach (var itemG in elements)
+            {
+                if (groupedByPrev != itemG.GroupedBy)
+                {
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="sectionHeader">
+                                <b>@itemG.GroupedBy</b>
+                            </div>
+                        </div>
+                    </div>
+                    groupedByPrev = itemG.GroupedBy;
+
+                    foreach (var item in elements)
+                    {
+                        if (item.GroupedBy == itemG.GroupedBy)
+                        {
+                            <div class="row">
+                                <div class="" style="width: 50px;">
+                                    &nbsp;
+                                </div>
+                                <div class="" style="width: 200px;">
+                                    @if (@item.Element == "Chapter")
+                                    {
+                                        <div class="ms-4">
+                                            @item.Element
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div>
+                                            @item.Element
+                                        </div>
+                                    }
+                                </div>
+                                <div class="" style="width: 150px;">
+                                    @item.YearMonth
+                                </div>
+                                <div class="col">
+                                    @item.Title
+                                </div>
+                                <div class="" style="width: 150px;">
+                                    @item.PhotoCount
+                                </div>
+                                <div class="" style="width: 150px;">
+                                    @item.Owner
+                                </div>
+                                <div class="col">
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<ElementDTO> elements { get; set; } = new List<ElementDTO>();
+    private string groupedByPrev = "zzz";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadElements();
+    }
+
+    private async Task LoadElements()
+    {
+        var tElements = await baseRepository.GetElements();
+        elements = tElements
+        .OrderBy(q => q.GroupedBy).ThenBy(q => q.ElementOrder).ThenBy(q => q.YearMon).ThenBy(q => q.Title)
+            .ToList();
+    }
+}

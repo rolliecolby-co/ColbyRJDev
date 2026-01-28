@@ -1,0 +1,108 @@
+﻿@page "/snippetComments/{snippetId:int}"
+
+@layout PostEditLayout
+
+
+@inject ISnippetRepository snippetRepository
+@inject ISnippetCommentRepository snippetCommentRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Snippet Comments: Title - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="snippet/edit/@SnippetId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (snippetComments != null && snippetComments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-4 pt-2 text-center">
+            Grouped By / Snippet
+        </div>
+        <div class="col-6">
+            <SubHeadingC Text="@snippetStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in snippetComments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteSnippetCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int SnippetId { get; set; }
+    private SnippetDTO Snippet { get; set; } = new SnippetDTO();
+    private List<SnippetCommentDTO> snippetComments { get; set; } = new List<SnippetCommentDTO>();
+    private int DeleteSnippetCommentId { get; set; } = 0;
+    string snippetStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var snippet = await snippetRepository.GetSnippet(SnippetId);
+        Snippet = snippet;
+        snippetStr = Snippet.GroupedBy + " / " + Snippet.Title;
+
+        await LoadSnippetComments();
+    }
+
+    private async Task LoadSnippetComments()
+    {
+        var vSnippetComments = await snippetCommentRepository.GetComments(SnippetId);
+        snippetComments = vSnippetComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await snippetCommentRepository.Delete(DeleteSnippetCommentId);
+            DeleteDialogOpen = false;
+            await LoadSnippetComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteSnippetCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteSnippetCommentId = id;
+        Text = "Do you want to delete this Snippet Comment?";
+        StateHasChanged();
+    }
+
+}

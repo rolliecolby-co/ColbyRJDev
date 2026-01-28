@@ -1,0 +1,92 @@
+﻿@page "/address/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IHttpContextAccessor httpContext
+@inject IAddressRepository addressRepository
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col">
+    </div>
+    <div class="col-6">
+        <HeadingC Text="Add Home Address" />
+
+        <EditForm Model="@address" OnValidSubmit="AddAddress">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="form-group ">
+                        <label>For Whom</label>
+                        <InputSelect @bind-Value="@address.Who" class="form-select">
+                            <option value=0 selected>-- Select For Whom --</option>
+                            @foreach (var w in who)
+                            {
+                                <option value="@w.Who">@w.Who</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => address.Who"></ValidationMessage>
+                    </div>
+                    <div class="form-group mt-2">
+                        <div class="row mt-2">
+                            <div class="col">
+                                <div class="form-group ">
+                                    <label>Start Year</label>
+                                    <InputNumber @bind-Value="address.YearInt" class="form-control"></InputNumber>
+                                    <ValidationMessage For="() => address.YearInt"></ValidationMessage>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <SelectMonStrC vLabel="Start Month" @bind-VMonStr="@address.MonStr" />
+                            </div>
+                            <div class="col">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Home Address</label>
+                        <div>
+                            <InputText @bind-Value="@address.HomeAddress" class="form-control" />
+                            <ValidationMessage For="@(() => address.HomeAddress)" />
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Remarks</label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@address.Remarks" Height="250px" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <button type="submit" class="btnSubmit">
+                    Add Address
+                </button>
+                <a href="addresses" class="btnReturn ms-3">Return</a>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col">
+    </div>
+</div>
+
+@code {
+    AddressDTO address = new AddressDTO();
+    List<WhoDTO> who = new List<WhoDTO>();
+    public int addressId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var tWho = await appUserRepository.GetWho("all");
+        who = tWho.ToList();
+    }
+
+    private async Task AddAddress()
+    {
+        var addResult = await addressRepository.Create(address);
+        navManager.NavigateTo("addresses");
+    }
+}

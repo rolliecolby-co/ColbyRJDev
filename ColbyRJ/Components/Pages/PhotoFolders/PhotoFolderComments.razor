@@ -1,0 +1,108 @@
+﻿@page "/photoFolderComments/{photoFolderId:int}"
+
+@layout PostEditLayout
+
+
+@inject IPhotoFolderRepository photoFolderRepository
+@inject IPhotoFolderCommentRepository photoFolderCommentRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Photo Folder Comments: Title - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="photoFolder/edit/@PhotoFolderId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (photoFolderComments != null && photoFolderComments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-4 pt-2 text-center">
+            Grouped By / Photo Folder
+        </div>
+        <div class="col-6">
+            <SubHeadingC Text="@photoFolderStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in photoFolderComments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeletePhotoFolderCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int PhotoFolderId { get; set; }
+    private PhotoFolderDTO PhotoFolder { get; set; } = new PhotoFolderDTO();
+    private List<PhotoFolderCommentDTO> photoFolderComments { get; set; } = new List<PhotoFolderCommentDTO>();
+    private int DeletePhotoFolderCommentId { get; set; } = 0;
+    string photoFolderStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var photoFolder = await photoFolderRepository.GetPhotoFolder(PhotoFolderId);
+        PhotoFolder = photoFolder;
+        photoFolderStr = PhotoFolder.GroupedBy + " / " + PhotoFolder.Title;
+
+        await LoadPhotoFolderComments();
+    }
+
+    private async Task LoadPhotoFolderComments()
+    {
+        var vPhotoFolderComments = await photoFolderCommentRepository.GetComments(PhotoFolderId);
+        photoFolderComments = vPhotoFolderComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await photoFolderCommentRepository.Delete(DeletePhotoFolderCommentId);
+            DeleteDialogOpen = false;
+            await LoadPhotoFolderComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeletePhotoFolderCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeletePhotoFolderCommentId = id;
+        Text = "Do you want to delete this Photo Folder Comment?";
+        StateHasChanged();
+    }
+
+}

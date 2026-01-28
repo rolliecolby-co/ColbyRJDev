@@ -1,0 +1,250 @@
+﻿@page "/galleryPhoto/edit/{photoId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IHttpContextAccessor httpContext
+@inject IGalleryRepository galleryRepository
+@inject IFileUpload fileUpload
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col-12">
+        <HeadingC Text="Edit Gallery Photo" />
+    </div>
+</div>
+
+@if (Sections.Count > 0 && Decades.Count > 0)
+{
+    <EditForm Model="Photo" OnValidSubmit="UpdatePhoto">
+        <DataAnnotationsValidator />
+        <IsProcessingC IsProcessing="IsProcessing" />
+        <StatusMessageC MessageType="@MessageType" MessageBody="@MessageBody" />
+
+        <div class="row mt-3">
+            <div class="col">
+                <div class="row mt-2">
+                    <div class="col">
+                        <div class="form-group">
+                            <label>Gallery Section</label>
+                            <InputSelect @bind-Value="@Photo.GallerySectionId" class="form-select">
+                                <option value=0 selected>-- Select Gallery Section --</option>
+                                @foreach (var item in Sections)
+                                {
+                                    <option value="@item.Id">@item.Section</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => Photo.GallerySectionId"></ValidationMessage>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label>Decade</label>
+                            <InputSelect @bind-Value="@Photo.GalleryDecadeId" class="form-select">
+                                <option value=0 selected>-- Select Decade --</option>
+                                @foreach (var item in Decades)
+                                {
+                                    <option value="@item.Id">@item.Decade</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => Photo.GalleryDecadeId"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <div class="form-group">
+                            <label>Caption</label>
+                            <InputText @bind-Value="Photo.Caption" class="form-control"></InputText>
+                            <ValidationMessage For="() => Photo.Caption"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <div class="form-group ">
+                            <label>Photo Year (optional)</label>
+                            <InputText @bind-Value="Photo.YearStr" class="form-control"></InputText>
+                            <ValidationMessage For="() => Photo.YearStr"></ValidationMessage>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group ">
+                            <label>Photo Month (optional)</label>
+                            <InputText @bind-Value="Photo.MonthStr" class="form-control"></InputText>
+                            <ValidationMessage For="() => Photo.MonthStr"></ValidationMessage>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="alertInfo">
+                            <p>
+                                Enter the appropriate integer for the Month
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col text-center">
+                        <div class="form-group pt-3">
+                            <button class="btnUpdate">Update Photo</button>
+                            <a href="galleryPhotos" class="btnReturn">Return</a>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="alertInfo">
+                            Click Update after any changes, to include adding or changing the Photo
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="mt-1">Gallery Photo</div>
+                <div class="form-group">
+                    <InputFile accept=".jpg,.jpeg,.png,.gif" OnChange="HandlePhotoUpload"></InputFile>
+                    <div class="row">
+                        @if (ImageUrl != null)
+                        {
+                            <div class="mt-3">
+                                <div class="photo-edit">
+                                    <img src="@ImageUrl" class="w-100" />
+                                </div>
+
+                                <button type="button" @onclick="() => DeletePhoto(Photo.PhotoUrl)" class="btnDelete mt-4">
+                                    Delete
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="alertInfo">
+                    May upload a .jpg, .png or .gif file
+                    <br />
+                    Max file size is 2 mb
+                    <br />
+                    Recommend reducing the image to less than 1 mb prior to uploading
+                    <br />
+                    To replace the image file, just upload a different file
+                </div>
+            </div>
+        </div>
+
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int PhotoId { get; set; }
+    private GalleryPhotoDTO Photo { get; set; } = new GalleryPhotoDTO();
+    private List<GallerySectionDTO> Sections = new List<GallerySectionDTO>();
+    private List<GalleryDecadeDTO> Decades = new List<GalleryDecadeDTO>();
+    string imageType = "";
+    private string? ImageUrl = null;
+    private long maxFileSize = 1024 * 1024 * 2;
+    bool errorFileSize = false;
+    public bool IsProcessing { get; set; } = false;
+    public string MessageType { get; set; }
+    public string MessageBody { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSections();
+        await LoadDecades();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var photo = await galleryRepository.GetPhoto(PhotoId);
+        Photo = photo;
+        ImageUrl = Photo.PhotoUrl;
+    }
+
+    private async Task LoadSections()
+    {
+        var result = await galleryRepository.GetSections();
+        Sections = result.ToList();
+    }
+
+    private async Task LoadDecades()
+    {
+        var result = await galleryRepository.GetDecades();
+        Decades = result.ToList();
+    }
+
+    private async Task HandlePhotoUpload(InputFileChangeEventArgs e)
+    {
+        IsProcessing = true;
+        MessageType = "";
+        MessageBody = "";
+        errorFileSize = false;
+
+        if (e.File.Size > maxFileSize)
+        {
+            errorFileSize = true;
+        }
+
+        if (errorFileSize == true)
+        {
+            MessageType = "error";
+            if (errorFileSize)
+            {
+                MessageBody += "The uploaded file is larger than 2 mb.  ";
+            }
+        }
+        else
+        {
+            if (Photo.PhotoUrl.Length > 0)
+            {
+                var imageName = Photo.PhotoUrl.ToLower();
+                imageName = imageName.Replace($"photogallery/", "");
+
+                var result = fileUpload.DeleteFile(imageName, "photoGallery");
+            }
+
+            if (e.File.Name.Contains(".gif"))
+            {
+                imageType = "image/gif";
+            }
+            else if (e.File.Name.Contains(".png"))
+            {
+                imageType = "image/png";
+            }
+            else if (e.File.Name.Contains(".jpg"))
+            {
+                imageType = "image/jpg";
+            }
+            else if (e.File.Name.Contains(".jpeg"))
+            {
+                imageType = "image/jpeg";
+            }
+
+            var imageFile = await e.File.RequestImageFileAsync(imageType, maxWidth: 1000, maxHeight: 750);
+
+            var uploadedImage = await fileUpload.UploadFile(imageFile, "photoGallery");
+            var uploadedImagePath = $"photoGallery/{uploadedImage}";
+
+            Photo.PhotoUrl = uploadedImagePath;
+
+            var response = await galleryRepository.UpdatePhoto(Photo);
+            ImageUrl = Photo.PhotoUrl;
+        }
+
+        IsProcessing = false;
+        StateHasChanged();
+    }
+
+    internal void DeletePhoto(string photoUrl)
+    {
+        var photoName = photoUrl.ToLower();
+        photoName = photoName.Replace("photogallery/", "");
+        var result = fileUpload.DeleteFile(photoName, "photoGallery");
+
+        Photo.PhotoUrl = "";
+        ImageUrl = null;
+    }
+
+    private async Task UpdatePhoto()
+    {
+        await galleryRepository.UpdatePhoto(Photo);
+        navManager.NavigateTo("galleryPhotos");
+    }
+}

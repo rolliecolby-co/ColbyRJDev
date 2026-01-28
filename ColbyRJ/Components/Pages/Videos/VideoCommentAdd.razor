@@ -1,0 +1,67 @@
+﻿@page "/videoComment/add/{VideoId:int}"
+
+@layout ViewLayout
+
+
+@inject IVideoRepository videoRepository
+@inject IVideoCommentRepository videoCommentRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-6">
+        <HeadingC Text="Add Video Comment" />
+
+        <div class="row mt-2">
+            <div class="col-4 pt-2 text-center">
+                Grouped By / Video
+            </div>
+            <div class="col">
+                <SubHeadingC Text="@videoStr" />
+            </div>
+        </div>
+
+        <EditForm Model="Comment" OnValidSubmit="AddComment">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group">
+                        <label><b>Your Comment</b></label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@Comment.Comments" Height="500px" />
+                        <ValidationMessage For="@(() => Comment.Comments)" />
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="form-group text-center mt-5">
+                        <button class="btnAdd">Add Comment</button>
+                        <br /><br />
+                        <a href="video/@Video.Key" class="btnReturn">Return</a>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+@code {
+    [Parameter] public int VideoId { get; set; }
+    private VideoDTO Video { get; set; } = new VideoDTO();
+    private VideoCommentDTO Comment { get; set; } = new VideoCommentDTO();
+    string videoStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var video = await videoRepository.GetVideo(VideoId);
+        Video = video;
+        videoStr = Video.GroupedBy + " / " + Video.Title;
+        Comment.VideoId = VideoId;
+    }
+
+    private async Task AddComment()
+    {
+        var newCommentResult = await videoCommentRepository.Create(Comment);
+        navManager.NavigateTo($"video/{@Video.Key}");
+    }
+}

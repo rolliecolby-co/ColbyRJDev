@@ -1,0 +1,122 @@
+﻿@page "/family/{id:int}"
+@rendermode InteractiveServer
+
+@layout BrowseLayout
+
+@inject IAppUserRepository userRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col">
+        <HeadingC Text="Family Member" />
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col"></div>
+    <div class="col-11">
+        <div class="row">
+            <div class="col">
+                <div>
+                    <label>Name</label>
+                    <div class="divItem">
+                        @fMember.Name
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label>Display Name</label>
+                    <div class="divItem">
+                        @fMember.DisplayName
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label>Mobile Phone</label>
+                    <div class="divItem">
+                        @fMember.MobilePhoneDisplay
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label>Home Phone</label>
+                    <div class="divItem">
+                        @fMember.HomePhoneDisplay
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label>Email</label>
+                    <div class="divItem">
+                        @fMember.Email
+                    </div>
+                </div>
+                <div class="mt-3 text-center">
+                    <a href="family" class="btnReturn ms-2">Return</a>
+                </div>
+            </div>
+            <div class="col">
+                <div class="">
+                    <label>Address</label>
+                    <div class="divItem">
+                        @fMember.Address
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label>Birthday</label>
+                    <div class="divItem">
+                        @fMember.Birthday
+                    </div>
+                </div>
+                @if (fMember.DisplayCouple.Length > 0)
+                {
+                    <div class="mt-2">
+                        <label>Couple Name</label>
+                        <div class="divItem">
+                            @fMember.DisplayCouple
+                        </div>
+                    </div>
+                }
+                @if (fMember.Anniversary.Length > 0)
+                {
+                    <div class="mt-2">
+                        <label>Anniversary</label>
+                        <div class="divItem">
+                            @fMember.Anniversary
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="col">
+                <div class="">
+                    <label>Hobbies</label>
+                    <div class="divItem">
+                        @((MarkupString)fMember.Hobbies)
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label>Interests</label>
+                    <div class="divItem">
+                        @((MarkupString)fMember.Interests)
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label>Note</label>
+                    <div class="divItem">
+                        @((MarkupString)fMember.Note)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private AppUserDTO fMember { get; set; } = new AppUserDTO();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var family = await userRepository.GetUser(Id);
+        fMember = family;
+    }
+}

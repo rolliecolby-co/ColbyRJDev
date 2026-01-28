@@ -1,0 +1,82 @@
+﻿@page "/photoAlbum/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IPhotoAlbumRepository photoAlbumRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col"></div>
+    <div class="col-6 ">
+        <HeadingC Text="Add Photo Album" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-3">
+    <div class="col"></div>
+    <div class="col-6">
+        <EditForm Model="PhotoAlbum" OnValidSubmit="AddPhotoAlbum">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <InputText @bind-Value="PhotoAlbum.Title" class="form-control"></InputText>
+                        <ValidationMessage For="() => PhotoAlbum.Title"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group ">
+                        <label>Photo Album Year</label>
+                        <InputNumber @bind-Value="PhotoAlbum.YearInt" class="form-control"></InputNumber>
+                        <ValidationMessage For="() => PhotoAlbum.YearInt"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col">
+                    <SelectMonStrC vLabel="Photo Album Month" @bind-VMonStr="@PhotoAlbum.MonStr" />                    
+                </div>
+                <div class="col">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col text-center">
+                    <div class="form-group pt-3">
+                        <button class="btnAdd">Add Photo Album</button>
+                        <a href="photoAlbums" class="btnReturn">Return</a>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="alertInfo">
+                        <p>
+                            When completing the Add Photo Album, a partial completion, you
+                            will be directed to the Update Photo Album page to complete the Photo Album.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    private PhotoAlbumCreateDTO PhotoAlbum { get; set; } = new PhotoAlbumCreateDTO();
+    public bool IsLoading { get; set; } = true;
+
+    private async Task AddPhotoAlbum()
+    {
+        var response = await photoAlbumRepository.Create(PhotoAlbum);
+        if (response.Substring(0, 2) == "id")
+        {
+            navManager.NavigateTo($"photoAlbum/edit/{response.Substring(3)}");
+        }
+        //navManager.NavigateTo("photoAlbums");
+    }
+}

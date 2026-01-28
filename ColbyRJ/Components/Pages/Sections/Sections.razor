@@ -1,0 +1,152 @@
+﻿@page "/sections"
+@rendermode InteractiveServer
+
+@layout AdminLayout
+
+@inject ISectionRepository sectionRepository
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row ">
+    <div class="col mb-2 ">
+        <HeadingC Text="Category / Section / Topic" />
+    </div>
+    <div class="mb-2 text-center" style="width: 220px;">
+        <a href="section/add" class="btnAdd">Add New Section</a>
+    </div>
+</div>
+
+<div class="row mt-1">
+    <div class="col">
+        @if (sections == null)
+        {
+            <div>
+                <h5>Loading ...</h5>
+            </div>
+        }
+        else
+        {
+            if (sections.Any())
+            {
+                @foreach (var itemC in categories)
+                {
+                    <div class="row mb-2">
+                        <div class="col-3">
+                            <div class="col py-2 categoryRow d-flex align-items-center">
+                                @itemC
+                            </div>
+                        </div>
+                        <div class="col">
+                            @foreach (var itemS in sections)
+                            {
+                                if (itemC == itemS.Category.Name)
+                                {
+                                    <div class="row mb-2">
+                                        <div class="col-4">
+                                            <div class="row">
+                                                <div class="col py-2 sectionRow d-flex align-items-center">
+                                                    @itemS.Name
+                                                </div>
+                                                <div class="py-2 sectionRow d-flex align-items-center" style="width: 130px;">
+                                                    <a href="@($"section/edit/{itemS.Id}")" class="btnEdit">Edit</a>
+                                                    @if (itemS.Topics == null || itemS.Topics.Count == 0)
+                                                    {
+                                                        <span>&nbsp;</span>
+                                                        <button type="button" class="btnDelete ms-2" onclick="@(()=> OpenDeleteSectionDialog(itemS.Id))">D</button>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            @if (itemS.Topics.Any())
+                                            {
+                                                <div class="row mb-2">
+                                                    @foreach (var itemT in itemS.Topics)
+                                                    {
+                                                        <div class="col-3">
+                                                            <div class="listCard me-2">
+                                                                @itemT.Name
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+</div>
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<string> categories;
+    private List<SectionDTO> sections;
+
+    public bool IsLoading { get; set; }
+    private int DeleteSectionId { get; set; } = 0;
+    private string categoryPrev = "zzz";
+    private string category = "zzz";
+
+    protected override async Task OnInitializedAsync()
+    {
+        categoryPrev = "zzz";
+        await LoadSections();
+    }
+
+    private async Task LoadSections()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        var tSections = await sectionRepository.GetSections();
+        sections = tSections.ToList();
+
+        var tCategories = await sectionRepository.GetSectionsCategories();
+        categories = tCategories.ToList();
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await sectionRepository.Delete(DeleteSectionId);
+            DeleteDialogOpen = false;
+            await LoadSections();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteSectionDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteSectionId = id;
+        Text = "Do you want to delete this Section?";
+        StateHasChanged();
+    }
+}
+
+<style>
+    .categoryRow {
+        background-color: #D8F9DB;
+    }
+
+    .sectionRow {
+        background-color: #FFE4B5;
+    }
+</style>

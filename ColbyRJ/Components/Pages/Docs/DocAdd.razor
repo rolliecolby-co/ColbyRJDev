@@ -1,0 +1,82 @@
+﻿@page "/doc/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IDocRepository docRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col"></div>
+    <div class="col-6 ">
+        <HeadingC Text="Add Document" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-3">
+    <div class="col"></div>
+    <div class="col-6">
+        <EditForm Model="Doc" OnValidSubmit="AddDoc">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <InputText @bind-Value="Doc.Title" class="form-control"></InputText>
+                        <ValidationMessage For="() => Doc.Title"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group ">
+                        <label>Doc Year</label>
+                        <InputNumber @bind-Value="Doc.YearInt" class="form-control"></InputNumber>
+                        <ValidationMessage For="() => Doc.YearInt"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col">
+                    <SelectMonStrC vLabel="Doc Month" @bind-VMonStr="@Doc.MonStr" />
+                </div>
+                <div class="col">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col text-center">
+                    <div class="form-group pt-3">
+                        <button class="btnAdd">Add Doc</button>
+                        <a href="docs" class="btnReturn">Return</a>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="alertInfo">
+                        <p>
+                            When completing the Add Document, a partial completion, you
+                            will be directed to the Update Document page to complete the Document.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    private DocCreateDTO Doc { get; set; } = new DocCreateDTO();
+    public bool IsLoading { get; set; } = true;
+
+    private async Task AddDoc()
+    {
+        var response = await docRepository.Create(Doc);
+        if (response.Substring(0, 2) == "id")
+        {
+            navManager.NavigateTo($"doc/edit/{response.Substring(3)}");
+        }
+        //navManager.NavigateTo("docs");
+    }
+}

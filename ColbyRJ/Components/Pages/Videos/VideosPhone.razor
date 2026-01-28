@@ -1,0 +1,122 @@
+﻿@page "/phoneVideos"
+@rendermode InteractiveServer
+
+@layout PhoneLayout
+
+@inject IVideoRepository videoRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="">
+    <HeadingC Text="Vides" />
+</div>
+<div class="mt-2">
+    @if (groupedBy != null && groupedBy.Count > 0)
+    {
+        <select value="@selectedGroupBy" class="form-select" @onchange="OnGroupByChanged">
+            <option value="">-- Filter By Grouping --</option>
+            @foreach (var item in groupedBy)
+            {
+                <option value="@item">@item</option>
+            }
+        </select>
+    }
+</div>
+<div class="mt-2">
+    @if (decades != null && decades.Count > 0)
+    {
+        <select value="@selectedDecade" class="form-select" @onchange="OnDecadeChanged">
+            <option value="">-- Filter By Decade --</option>
+            @foreach (var item in decades)
+            {
+                <option value="@item">@item</option>
+            }
+        </select>
+    }
+</div>
+
+@if (showList)
+{
+    <div class="row mt-2">
+        <div class="col">
+            @foreach (var video in Videos)
+            {
+                <div class="m-2" style="float: left;">
+                    <a href="phoneVideo/@video.Key" class="btnList">@video.Title</a>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (videos != null && videos.Count > 0)
+{
+    <div class="mt-2">
+        <RadzenDataGrid Data="@videos" TItem="VideoDTO"
+                        PagerHorizontalAlign="HorizontalAlign.Center">
+            <Columns>
+                <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Title" Title="Title" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Id" Width="80px" TextAlign="TextAlign.Center"
+                                      HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        @{
+                            var link = "phoneVideo/" + data.Key;
+                        }
+                        <RadzenLink Path=@link Text="View" Target="_photoAlbum" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+}
+
+@code {
+    private List<VideoDTO> videos;
+    private List<VideoDTO> allVideos;
+    private List<VideoDTO> Videos = new List<VideoDTO>();
+    private List<string> groupedBy;
+    private List<string> decades;
+    bool showList = true;
+    string selectedGroupBy = "";
+    string selectedDecade = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVideos();
+
+        Videos = allVideos.OrderBy(o => o.Title).ToList();
+
+        groupedBy = allVideos.OrderBy(q => q.GroupedBy).Select(q => q.GroupedBy).ToList();
+        groupedBy = groupedBy.AsQueryable().Distinct().ToList();
+
+        decades = allVideos.OrderBy(q => q.Decade).Select(q => q.Decade).ToList();
+        decades = decades.AsQueryable().Distinct().ToList();
+    }
+
+    private async Task LoadVideos()
+    {
+        var tVideos = await videoRepository.GetActiveVideos();
+        allVideos = tVideos.ToList();
+    }
+
+    private void OnGroupByChanged(ChangeEventArgs e)
+    {
+        showList = false;
+        selectedDecade = "";
+        selectedGroupBy = e.Value.ToString();
+        videos = allVideos.Where(q => q.GroupedBy == selectedGroupBy).ToList();
+        StateHasChanged();
+    }
+
+    private void OnDecadeChanged(ChangeEventArgs e)
+    {
+        showList = false;
+        selectedGroupBy = "";
+        selectedDecade = e.Value.ToString();
+        videos = allVideos.Where(q => q.Decade == selectedDecade).ToList();
+        StateHasChanged();
+    }
+}

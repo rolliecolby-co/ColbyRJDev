@@ -1,0 +1,100 @@
+﻿@page "/tripElementPhotoEdit/{Element}/{ElementId:int}/{PhotoId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject ITripRepository tripRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-8">
+        <HeadingC Text="@heading" />
+
+        @if (Photo != null && Photo.Trip != null)
+        {
+            <div class="row mt-2">
+                <div class="col-3 pt-2 text-end">
+                    Trip:
+                </div>
+                <div class="col text-center">
+                    <SubHeadingC Text="@Photo.Trip.Title" />
+                </div>
+            </div>
+        }
+
+        <EditForm Model="Photo" OnValidSubmit="UpdatePhoto">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col-5">
+                    <div class="form-group">
+                        <label><b>Caption</b></label>
+                        <InputText @bind-Value="Photo.Caption" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Order Number</label>
+                        <InputNumber @bind-Value="Photo.Sort" class="form-control"></InputNumber>
+                    </div>
+                    <div class="form-group text-center mt-3">
+                        <button class="btnSave">Save</button>
+                        @if (Element == "Group")
+                        {
+                        <a href="tripGroupPhotos/@ElementId" class="btnReturn">Return</a>
+                        }
+                        @if (Element == "Section")
+                        {
+                        <a href="tripSectionPhotos/@ElementId" class="btnReturn">Return</a>
+                        }
+                        @if (Element == "SubSection")
+                        {
+                        <a href="tripSubSectionPhotos/@ElementId" class="btnReturn">Return</a>
+                        }
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="photo-edit">
+                        <img src="@Photo.PhotoUrl" class="img-fluid" />
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    [Parameter] public int PhotoId { get; set; }
+    [Parameter] public string Element { get; set; } = string.Empty;
+    [Parameter] public int ElementId { get; set; }
+    private TripPhotoDTO Photo { get; set; } = new TripPhotoDTO();
+    string heading = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var photo = await tripRepository.GetPhoto(PhotoId);
+        Photo = photo;
+
+        heading = "Edit Trip " + Element + " Photo";
+        StateHasChanged();
+    }
+
+    private async Task UpdatePhoto()
+    {
+        var updatePhotoResult = await tripRepository.UpdatePhoto(Photo);
+
+        if (Element == "Group")
+        {
+            navManager.NavigateTo($"tripGroupPhotos/{@ElementId}");
+        }
+        if (Element == "Section")
+        {
+            navManager.NavigateTo($"tripSectionPhotos/{@ElementId}");
+        }
+        if (Element == "SubSection")
+        {
+            navManager.NavigateTo($"tripSubSectionPhotos/{@ElementId}");
+        }
+    }
+}

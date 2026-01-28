@@ -1,0 +1,66 @@
+﻿@page "/category/edit/{CategoryId:int}"
+@rendermode InteractiveServer
+
+@layout AdminLayout
+
+@inject ICategoryRepository categoryRepository
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Update Category</PageTitle>
+
+<div class="row my-2">
+    <div class="col-4">
+        <HeadingC Text="Update Category" />
+
+        <div class="mt-3">
+            <EditForm Model="Category" OnValidSubmit="UpdateCategory">
+                <DataAnnotationsValidator />
+
+                <div class="form-group my-2">
+                    <label>Name</label>
+                    <InputText @bind-Value="Category.Name" class="form-control"></InputText>
+                    <ValidationMessage For="() => Category.Name"></ValidationMessage>
+                </div>
+                <div class="form-group mt-3 mb-2">
+                    @if (Category != null && Category.Sections != null && Category.Sections.Count > 0)
+                    {
+                        <label class="pe-4">Sections:</label>
+                        foreach (var vSection in Category.Sections)
+                        {
+                            <span class="m-2 px-3 py-2 listSpan">
+                                <label>@vSection.Name</label>
+                            </span>
+                        }
+                    }
+                </div>
+
+                <div class="form-group mt-3">
+                    <button class="btnUpdate">Update Category</button>
+                    <a href="categories" class="btnReturn ms-3">Return</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int CategoryId { get; set; }
+
+    private CategoryDTO Category { get; set; } = new CategoryDTO();
+    public bool IsLoading { get; set; } = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLoading = true;
+        var category = await categoryRepository.GetCategory(CategoryId);
+        Category = category;
+        IsLoading = false;
+    }
+
+    private async Task UpdateCategory()
+    {
+        await categoryRepository.Update(Category);
+        navManager.NavigateTo("categories");
+    }
+}

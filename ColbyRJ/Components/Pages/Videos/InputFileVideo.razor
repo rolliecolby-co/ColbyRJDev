@@ -1,0 +1,143 @@
+﻿@inject IFileUpload FileUpload
+@inject IWebHostEnvironment Environment
+
+<div>
+    <label>Video File</label>
+</div>
+
+@if (string.IsNullOrEmpty(filename))
+{
+    <div class="form-group">
+        <InputFile accept=".mp4" OnChange="LoadVideo" />
+    </div>
+    <div class="alertInfo">
+        May upload a single .mp4 file that is less than 100 mb
+        <br />
+        A large file may take 20-30 secondes to upload
+        <br />
+        Wait for the video to appear before clicking on anything else
+        <br />
+        The video will be displayed if the file is valid
+        <br />
+        Selecting a larger file may not show the filename and will cause the upload to hang
+    </div>
+    @if (message.Length > 0)
+    {
+        <div class="alert alert-danger mt-2">
+            @message
+        </div>
+    }
+}
+else
+{
+    @if (isLoading)
+    {
+        <div class="">
+            <span>Please wait ... Video is uploading ...</span>
+        </div>
+    }
+    else
+    {
+        <div class="mt-1">
+            <div>
+                <video controls="controls" width="100%" controlsList="nodownload">
+                    <source src="@videoURL" />
+                </video>
+            </div>
+
+            <button type="button" @onclick="() => OpenDeleteVideoFileDialog(filename)" class="btnDelete mt-3">
+                Delete
+            </button>
+        </div>
+        <div class="alertInfo">
+            Stop the Video from playing prior to Deleting
+        </div>
+
+    }
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public VideoDTO Video { get; set; } = new VideoDTO();
+    string filename { get; set; } = "";
+    bool isLoading { get; set; } = false;
+    private long maxFileSize = 1024 * 1024 * 100;
+    string message { get; set; } = "";
+    string videoURL { get; set; }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        if (Video != null)
+        {
+            filename = Video.VideoFilename;
+            videoURL = Video.VideoUrl;
+        }
+    }
+
+    async Task LoadVideo(InputFileChangeEventArgs e)
+    {
+        isLoading = true;
+        message = "";
+
+        var videoFile = e.File;
+
+        if (e.File.Size > maxFileSize)
+        {
+            message = "Selected File is too large";
+        }
+        else
+        {
+            var newFileName = Guid.NewGuid().ToString() + ".mp4";
+            filename = newFileName;
+
+            var path = Path.Combine(Environment.WebRootPath,
+                "videos", newFileName);
+
+            await using FileStream fs = new(path, FileMode.Create);
+            await videoFile.OpenReadStream(maxFileSize).CopyToAsync(fs);
+
+            videoURL = "videos/" + newFileName;
+
+            Video.VideoFilename = newFileName;
+            Video.VideoUrl = videoURL;
+        }
+
+        isLoading = false;
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+    string videoFileToDelete;
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            try
+            {
+                var result = FileUpload.DeleteFile(videoFileToDelete, "videos");
+            }
+            catch
+            { }
+
+            filename = "";
+            videoURL = "";
+            Video.VideoFilename = "";
+            Video.VideoUrl = "";
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteVideoFileDialog(string videoFilename)
+    {
+        DeleteDialogOpen = true;
+        videoFileToDelete = videoFilename;
+        Text = "Do you want to delete this Video File?";
+        StateHasChanged();
+    }
+}

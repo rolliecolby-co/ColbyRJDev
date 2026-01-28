@@ -1,0 +1,66 @@
+﻿@page "/showWindowSize"
+@rendermode InteractiveServer
+
+@inject IJSRuntime JsRuntime
+
+<h1>Window Dimensions</h1>
+
+<button class="btn btn-primary" @onclick="OnButtonClick">Get Dimensions</button>
+<br />
+<br />
+
+<p>Window Height: @Height</p>
+<p>Window Width: @Width</p>
+
+<p>
+    <a href="http://howbigismybrowser.com/" target="_browserSize">Resize my Browser</a>
+</p>
+
+<p>
+    cellPhone width: 384
+    <br />
+    cellPhone height: 693
+</p>
+
+<p>
+    tablet width: 800
+    <br />
+    tablet height: 1198
+</p>
+
+<p>
+    <br />
+    testing LT width: 1475
+    <br />
+    testing LT height: 785
+    <br />
+    <br />
+    Lenovo LT width: 1462
+    <br />
+    Lenovo LT height: 782
+    <br />
+    <br />
+    main LT width: 1523
+    <br />
+    main LT height: 794
+</p>
+
+@code {
+
+    public int Height { get; set; }
+    public int Width { get; set; }
+
+    private async Task OnButtonClick()
+    {
+        var dimension = await JsRuntime.InvokeAsync<WindowDimension>("getWindowDimensions");
+        Height = dimension.Height;
+        Width = dimension.Width;
+    }
+
+    public class WindowDimension
+    {
+        public int Width { get; set; }
+        public int Height { get; set; }
+    }
+
+}

@@ -1,0 +1,109 @@
+﻿@page "/photoAlbumComments/{photoAlbumId:int}"
+
+@layout PostEditLayout
+
+
+@inject IPhotoAlbumRepository photoAlbumRepository
+@inject IPhotoAlbumCommentRepository photoAlbumCommentRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="PhotoAlbum Comments: Title - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="photoAlbum/edit/@PhotoAlbumId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (photoAlbumComments != null && photoAlbumComments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-4 pt-2 text-center">
+            Grouped By / Photo Album
+        </div>
+        <div class="col-6">
+            <SubHeadingC Text="@photoAlbumStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in photoAlbumComments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeletePhotoAlbumCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int PhotoAlbumId { get; set; }
+    private PhotoAlbumDTO PhotoAlbum { get; set; } = new PhotoAlbumDTO();
+    private List<PhotoAlbumCommentDTO> photoAlbumComments { get; set; } = new List<PhotoAlbumCommentDTO>();
+    private int DeletePhotoAlbumCommentId { get; set; } = 0;
+    string photoAlbumStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var photoAlbum = await photoAlbumRepository.GetPhotoAlbum(PhotoAlbumId);
+        PhotoAlbum = photoAlbum;
+        photoAlbumStr = PhotoAlbum.GroupedBy + " / " + PhotoAlbum.Title;
+
+        await LoadPhotoAlbumComments();
+    }
+
+    private async Task LoadPhotoAlbumComments()
+    {
+        var vPhotoAlbumComments = await photoAlbumCommentRepository.GetComments(PhotoAlbumId);
+        photoAlbumComments = vPhotoAlbumComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await photoAlbumCommentRepository.Delete(DeletePhotoAlbumCommentId);
+            DeleteDialogOpen = false;
+            await LoadPhotoAlbumComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeletePhotoAlbumCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeletePhotoAlbumCommentId = id;
+        Text = "Do you want to delete this PhotoAlbum Comment?";
+        StateHasChanged();
+    }
+
+}
+

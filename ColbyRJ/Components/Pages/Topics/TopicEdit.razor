@@ -1,0 +1,75 @@
+﻿@page "/topic/edit/{TopicId:int}"
+@rendermode InteractiveServer
+
+@inject ITopicRepository topicRepository
+@inject ISectionRepository sectionRepository
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row my-2">
+    <h3>Update Topic</h3>
+
+    <div class="col-6">
+        @if (IsLoading)
+        {
+            <div>
+                <h5>Loading ...</h5>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="Topic" OnValidSubmit="UpdateTopic">
+                <DataAnnotationsValidator />
+
+                <div class="border ps-2 pt-1 pb-1">
+                    <div class="form-group">
+                        <label>Category - Section</label>
+                        <InputSelect @bind-Value="@Topic.SectionId" class="form-select">
+                            @foreach (var item in Sections)
+                            {
+                                <option value="@item.Id">@item.Category.Name -  @item.Name</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Topic.SectionId"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <InputText @bind-Value="Topic.Name" class="form-control"></InputText>
+                    <ValidationMessage For="()=> Topic.Name"></ValidationMessage>
+                </div>
+
+                <div class="form-group py-2">
+                    <button class="btnUpdate">Update Topic</button>
+                    <a href="topics" class="btnReturn">Return</a>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int TopicId { get; set; }
+
+    private TopicDTO Topic { get; set; }
+    private List<SectionDTO> Sections { get; set; } = new List<SectionDTO>();
+    public bool IsLoading { get; set; } = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLoading = true;
+        var sections = await sectionRepository.GetSections();
+        Sections = sections.ToList();
+
+        var topic = await topicRepository.GetTopic(TopicId);
+        Topic = topic;
+        IsLoading = false;
+    }
+
+    private async Task UpdateTopic()
+    {
+        await topicRepository.Update(Topic);
+        navManager.NavigateTo("topics");
+    }
+}

@@ -1,0 +1,63 @@
+﻿@page "/viewImages"
+
+@layout ViewLayout
+
+@using System.IO;
+
+<div class="row mt-5">
+    <div class="col">
+    </div>
+    <div class="col-8">
+        <h3>View Images</h3>
+
+        <div class="row">
+            <div class="col-md-3">
+                <button class="btnLoad" @onclick="LoadImages">Load Images</button>
+                <hr />
+                <h2>File List</h2>
+                <hr />
+                @if (filesList != null && filesList.Count > 0)
+                {
+                    int nSL = 0;
+                    @foreach (string file in filesList)
+                    {
+                        nSL++;
+                        <br />
+                        <span>@nSL.</span>
+                        <span @onclick="@(e=>ReadFile(file))" style="cursor:pointer;text-decoration:underline;color:blue;">@file</span>
+                    }
+                }
+            </div>
+            <div class="col-md-9">
+                <h1>Image Name : @imgName</h1>
+                <div>
+                    <img src="@img" asp-append-version="true" style="width:600px;height:400px;" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+    </div>
+</div>
+
+@code {
+    string img = "";
+    string imgName = "N/A";
+    List<string> filesList = new List<string>();
+    string path = $"{Directory.GetCurrentDirectory()}{@"\wwwroot\photoDirs\images"}";
+
+    public void LoadImages()
+    {
+        var files = Directory.GetFiles(path);
+        foreach (var file in files)
+        {
+            filesList.Add(Path.GetFileName(file));
+        }
+    }
+
+    public void ReadFile(string fileName)
+    {
+        imgName = fileName.Split('.')[0];
+        img = "/photoDirs/images/" + fileName;
+    }
+}

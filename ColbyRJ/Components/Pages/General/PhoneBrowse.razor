@@ -1,0 +1,72 @@
+﻿@page "/phone"
+
+@layout PhoneLayout
+
+@inject IHintRepository hintRepository
+@attribute [Authorize]
+
+<PageTitle>Colby Family Memories</PageTitle>
+
+<div class="text-center">
+    <h3>Colby Family Memories</h3>
+</div>
+
+<div class="text-center mt-2">
+    <b>Audio Welcome</b>
+    <div>
+        <audio controls="controls"><source src="inc/welcome.mp3" /></audio>
+    </div>
+</div>
+
+<div class="mt-2">
+    <div class="browsePanel">
+        @if (leftHints != null && leftHints.Count > 0)
+        {
+            foreach (var item in leftHints)
+            {
+                <CollapsableC Title="@item.Title" Collapsed="true">
+                    @((MarkupString)@item.Value)
+                </CollapsableC>
+            }
+        }
+    </div>
+</div>
+
+<div class="mt-2">
+    <div>
+        <img src="images/momdadfourcorners1975.png" class="img-fluid browsePhoto" />
+    </div>
+</div>
+
+<div class="mt-2">
+    <div class="browsePanel">
+        @if (rightHints != null && rightHints.Count > 0)
+        {
+            foreach (var item in rightHints)
+            {
+                <CollapsableC Title="@item.Title" Collapsed="true">
+                    @((MarkupString)@item.Value)
+                </CollapsableC>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<HintDTO> leftHints;
+    private List<HintDTO> rightHints;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHints();
+    }
+
+    private async Task LoadHints()
+    {
+        var result = await hintRepository.GetHintsByKey("BL");
+        leftHints = result.ToList();
+
+        var result2 = await hintRepository.GetHintsByKey("BR");
+        rightHints = result2.ToList();
+    }
+}

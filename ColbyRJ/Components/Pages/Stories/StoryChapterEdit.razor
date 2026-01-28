@@ -1,0 +1,343 @@
+﻿@page "/storyChapter/edit/{ChapterId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IStoryChapterRepository storyChapterRepository
+@inject IStoryChapterPhotoRepository storyChapterPhotoRepository
+@inject IFileUpload fileUpload
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <HeadingC Text="Edit Story Chapter" />
+</div>
+
+<EditForm Model="Chapter" OnValidSubmit="UpdateChapter">
+    <DataAnnotationsValidator />
+    <StatusMessageC MessageType="@MessageType" MessageBody="@MessageBody" />
+
+    @if (IsLoading)
+    {
+        <div>
+            <h5>Loading ...</h5>
+        </div>
+    }
+    else
+    {
+        <div class="row mt-3">
+            <div class="col">
+                <div class="row">
+                    <div class="col">
+                        <div class="row py-2">
+                            <div class="col">
+                                <SubHeadingC Text="@storyStr" />
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label><b>Chapter Title</b></label>
+                                    <InputText @bind-Value="Chapter.Title" class="form-control"></InputText>
+                                    <ValidationMessage For="() => Chapter.Title"></ValidationMessage>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col">
+                                <label>Chapter When</label>
+                                <div class="divDisabled">
+                                    @Chapter.YearMonth
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="p-3 text-center mt-1">
+                                    <a href="yearMon/edit/storyChapter/@Chapter.Id" class="btnEdit">Edit Year Month</a>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-group text-center mt-3">
+                                    <label>Active</label> &nbsp
+                                    <InputCheckbox @bind-Value="Chapter.Active" class="form-check-input"></InputCheckbox>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col text-center">
+                                <div class="form-group text-center">
+                                    <button class="btnSave">Save</button>
+                                    <a href="stories" class="btnReturn ms-3">Return</a>
+                                </div>
+                                <div class="alertInfo mt-2">
+                                    Save after uploading audio, uploading photos and after any changes.
+                                    <br />
+                                    Also, Save any changes prior to Reviewing Photos or Reviewing Comments.
+                                </div>
+                            </div>
+                            <div class="col">
+                                <InputFileAudioChapter Chapter="Chapter" />
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col text-center">
+                                <div class="divDisabled text-center mb-3">
+                                    @Chapter.Photos.Count Photo(s)
+                                </div>
+                                @if (Chapter.Photos.Count > 0)
+                                {
+                                    <div class="mt-2">
+                                        <a href="storyChapterPhotos/@Chapter.Id" class="btnReview">Review Photos</a>
+                                    </div>
+                                    <div class="alertInfo mt-3">
+                                        To set the Order, to Edit Captions or to Edit Photo Dates
+                                    </div>
+                                }
+                            </div>
+                            <div class="col text-center">
+                                <div class="divDisabled text-center mb-3">
+                                    @Chapter.Comments.Count Comment(s)
+                                </div>
+                                @if (Chapter.Comments.Count > 0)
+                                {
+                                    <div class="mt-2">
+                                        <a href="storyChapterComments/@Chapter.Id" class="btnReview">Review Comments</a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="form-group">
+                            <label><b>The Chapter's' Story</b></label>
+                            <RZHtmlEditorLteC @bind-HtmlValue="@Chapter.Body" Height="600px" />
+                            <ValidationMessage For="() => Chapter.Body"></ValidationMessage>
+                        </div>
+                        <div class="alert alert-info mt-2">
+                            If you would like your long narrative displayed in 2 columns,
+                            enter newColumn in a new paragraph at the desired column break point.
+                            <br />
+                            And if you would like the narrative displayed in 3 columns,
+                            enter newColumn again in a new paragraph at the desired column break point.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="mb-2">Story Chapter Photos</div>
+                <div class="form-group">
+                    <InputFile accept=".jpg,.jpeg,.png,.gif" OnChange="HandlePhotoUpload" multiple></InputFile>
+                    <div class="row">
+                        @if (IsImageUploadProcessStarted)
+                        {
+                            <div class="col-md-12">
+                                <span><i class="fa fa-spin fa-spinner"></i> Please wait.. Images are uploading...</span>
+                            </div>
+                        }
+                        @if (Chapter.PhotoUrls != null && Chapter.PhotoUrls.Count > 0)
+                        {
+                            int serial = 1;
+                            foreach (var photo in Chapter.PhotoUrls)
+                            {
+                                <div class="col-3 mt-3">
+                                    <div class="photo-edit">
+                                        <img src="@photo" class="w-100" />
+                                        <span class="photo-edit-title">@serial</span>
+                                    </div>
+
+                                    <button type="button" @onclick="()=>DeletePhoto(photo)" class="btnDelete mt-4">
+                                        Delete
+                                    </button>
+                                </div>
+                                serial++;
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-6">
+                <div class="alertInfo">
+                    May upload multiple .jpg, .png and .gif files
+                    <br />
+                    Use ctrl key to select multiple files for upload, or upload 1 at a time
+                    <br />
+                    Max file size is 2 mb
+                    <br />
+                    Max upload size is 5 mb
+                    <br />
+                    Recommend reducing the image to less than 1 mb prior to uploading
+                </div>
+            </div>
+        </div>
+    }
+</EditForm>
+
+@code {
+    [Parameter] public int ChapterId { get; set; }
+    private StoryChapterDTO Chapter { get; set; } = new StoryChapterDTO();
+
+    public bool IsProcessing { get; set; } = false;
+    public bool IsImageUploadProcessStarted { get; set; }
+    public bool IsLoading { get; set; } = true;
+    public string MessageType { get; set; }
+    public string MessageBody { get; set; }
+    public string Wysiwyg { get; set; }
+    private StoryChapterPhotoDTO ChapterPhoto { get; set; } = new StoryChapterPhotoDTO();
+    string storyStr = "";
+    string imageType = "";
+    private long maxUploadSize = 1024 * 1024 * 5;
+    private long maxFileSize = 1024 * 1024 * 2;
+    bool errorFileSize = false;
+    bool errorUploadSize = false;
+    long uploadSize = 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLoading = true;
+
+        await GetStoryChapter();
+
+        storyStr = "Story: " + Chapter.Story.Title;
+        IsLoading = false;
+    }
+
+    private async Task GetStoryChapter()
+    {
+        Chapter = new StoryChapterDTO();
+
+        var chapter = await storyChapterRepository.GetChapter(ChapterId);
+        Chapter = chapter;
+        if (Chapter?.Photos != null)
+        {
+            Chapter.PhotoUrls = Chapter.Photos.Select(u => u.PhotoUrl).ToList();
+        }
+    }
+
+    private async Task UpdateChapter()
+    {
+        IsProcessing = true;
+        MessageType = "ok";
+        MessageBody = "";
+
+        var updateChapterResult = await storyChapterRepository.Update(Chapter);
+        
+        await GetStoryChapter();
+
+        MessageBody = "Story Chapter Updated";
+        IsProcessing = false;
+    }
+
+    private async Task HandlePhotoUpload(InputFileChangeEventArgs e)
+    {
+        IsProcessing = true;
+        MessageType = "";
+        MessageBody = "";
+        errorFileSize = false;
+        errorUploadSize = false;
+        uploadSize = 0;
+
+        if (e.GetMultipleFiles().Count > 0)
+        {
+            foreach (var file in e.GetMultipleFiles())
+            {
+                if (file.Size > maxFileSize)
+                {
+                    errorFileSize = true;
+                }
+                uploadSize += file.Size;
+                if (uploadSize > maxUploadSize)
+                {
+                    errorUploadSize = true;
+                }
+            }
+
+            if (errorFileSize == true || errorUploadSize == true)
+            {
+                MessageType = "error";
+                if (errorFileSize)
+                {
+                    MessageBody += "One or more of the uploaded files is larger than 2 mb.  ";
+                }
+                if (errorUploadSize)
+                {
+                    MessageBody += "Attempted to upload more than 5 mb.";
+                }
+            }
+            else
+            {
+                var photos = new List<string>();
+
+                foreach (var file in e.GetMultipleFiles())
+                {
+                    System.IO.FileInfo fileInfo = new System.IO.FileInfo(file.Name);
+
+                    if (fileInfo.Extension.ToLower() == ".jpeg")
+                    {
+                        imageType = "image/jpeg";
+                    }
+                    else if (fileInfo.Extension.ToLower() == ".jpg")
+                    {
+                        imageType = "image/jpg";
+                    }
+                    else if (fileInfo.Extension.ToLower() == ".png")
+                    {
+                        imageType = "image/png";
+                    }
+                    else if (fileInfo.Extension.ToLower() == ".gif")
+                    {
+                        imageType = "image/gif";
+                    }
+
+                    var imageFile = await file.RequestImageFileAsync(imageType, maxWidth: 1000, maxHeight: 750);
+
+                    var uploadedImage = await fileUpload.UploadFile(imageFile, "storyChapterPhotos");
+                    var uploadedImagePath = $"storyChapterPhotos/{uploadedImage}";
+
+                    photos.Add(uploadedImagePath);
+
+                    ChapterPhoto = new StoryChapterPhotoDTO()
+                        {
+                            StoryChapterId = ChapterId,
+                            PhotoUrl = uploadedImagePath
+                        };
+                    await storyChapterPhotoRepository.Create(ChapterPhoto);
+                }
+
+                if (photos.Any())
+                {
+                    if (Chapter.PhotoUrls != null && Chapter.PhotoUrls.Any())
+                    {
+                        Chapter.PhotoUrls.AddRange(photos);
+                    }
+                    else
+                    {
+                        Chapter.PhotoUrls = new List<string>();
+                        Chapter.PhotoUrls.AddRange(photos);
+                    }
+                }
+            }
+        }
+
+        IsProcessing = false;
+    }
+
+    internal async void DeletePhoto(string photoUrl)
+    {
+        IsProcessing = true;
+        var photoIndex = Chapter.PhotoUrls.FindIndex(x => x == photoUrl);
+        var photoName = photoUrl.ToLower();
+        photoName = photoName.Replace("storychapterphotos/", "");
+
+        var deleteResponse = fileUpload.DeleteFile(photoName, "storyChapterPhotos");
+
+        await storyChapterPhotoRepository.DeletePhotoByPhotoUrl(photoUrl);
+
+        Chapter.PhotoUrls.RemoveAt(photoIndex);
+        IsProcessing = false;
+        StateHasChanged();
+    }
+}

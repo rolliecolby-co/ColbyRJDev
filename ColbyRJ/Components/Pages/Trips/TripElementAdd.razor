@@ -1,0 +1,52 @@
+﻿@page "/trip/{Element}/{ParentId:int}/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject ITripRepository tripRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+@code {
+    [Parameter] public int ParentId { get; set; }
+    [Parameter] public string Element { get; set; }
+    private TripGroupCreateDTO TripGroup { get; set; } = new TripGroupCreateDTO();
+    private TripSectionCreateDTO TripSection { get; set; } = new TripSectionCreateDTO();
+    private TripSubSectionCreateDTO TripSubSection { get; set; } = new TripSubSectionCreateDTO();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Element == "Group")
+        {
+            TripGroup.TripId = ParentId;
+
+            var response = await tripRepository.CreateGroup(TripGroup);
+            if (response.Substring(0, 2) == "id")
+            {
+                navManager.NavigateTo($"tripGroup/edit/{response.Substring(3)}");
+            }
+        }
+
+        if (Element == "Section")
+        {
+            TripSection.TripGroupId = ParentId;
+
+            var response = await tripRepository.CreateSection(TripSection);
+            if (response.Substring(0, 2) == "id")
+            {
+                navManager.NavigateTo($"tripSection/edit/{response.Substring(3)}");
+            }
+        }
+
+        if (Element == "SubSection")
+        {
+            TripSubSection.TripSectionId = ParentId;
+
+            var response = await tripRepository.CreateSubSection(TripSubSection);
+            if (response.Substring(0, 2) == "id")
+            {
+                navManager.NavigateTo($"tripSubSection/edit/{response.Substring(3)}");
+            }
+        }
+    }
+}

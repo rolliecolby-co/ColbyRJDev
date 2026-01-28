@@ -1,0 +1,108 @@
+﻿@page "/docComments/{docId:int}"
+
+@layout PostEditLayout
+
+
+@inject IDocRepository docRepository
+@inject IDocCommentRepository docCommentRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Document Comments: Title - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="doc/edit/@DocId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (docComments != null && docComments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-4 pt-2 text-center">
+            Grouped By / Doc
+        </div>
+        <div class="col-6">
+            <SubHeadingC Text="@docStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in docComments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteDocCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int DocId { get; set; }
+    private DocDTO Doc { get; set; } = new DocDTO();
+    private List<DocCommentDTO> docComments { get; set; } = new List<DocCommentDTO>();
+    private int DeleteDocCommentId { get; set; } = 0;
+    string docStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var doc = await docRepository.GetDoc(DocId);
+        Doc = doc;
+        docStr = Doc.GroupedBy + " / " + Doc.Title;
+
+        await LoadDocComments();
+    }
+
+    private async Task LoadDocComments()
+    {
+        var vDocComments = await docCommentRepository.GetComments(DocId);
+        docComments = vDocComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await docCommentRepository.Delete(DeleteDocCommentId);
+            DeleteDialogOpen = false;
+            await LoadDocComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteDocCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteDocCommentId = id;
+        Text = "Do you want to delete this Document Comment?";
+        StateHasChanged();
+    }
+
+}

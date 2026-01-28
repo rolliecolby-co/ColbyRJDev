@@ -1,0 +1,77 @@
+﻿@page "/storyChapterComment/add/{ChapterId:int}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IStoryChapterRepository storyChapterRepository
+@inject IStoryChapterCommentRepository storyChapterCommentRepository
+@inject NavigationManager navManager
+
+@if (Chapter != null && Chapter.Story != null)
+{
+    <div class="row">
+        <div class="col"></div>
+        <div class="col-6">
+            <HeadingC Text="Add Story Chapter Comment" />
+
+            <div class="row mt-2">
+                <div class="col-4 pt-2 text-center">
+                    Story
+                </div>
+                <div class="col">
+                    <SubHeadingC Text="@Chapter.Story.Title" />
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-4 pt-2 text-center">
+                    Chapter
+                </div>
+                <div class="col">
+                    <SubSubHeadingC Text="@Chapter.Title" />
+                </div>
+            </div>
+
+            <EditForm Model="Comment" OnValidSubmit="AddComment">
+                <DataAnnotationsValidator />
+
+                <div class="row mt-2">
+                    <div class="col">
+                        <div class="form-group">
+                            <label><b>Your Comment</b></label>
+                            <RZHtmlEditorMinC @bind-HtmlValue="@Comment.Comments" Height="500px" />
+                            <ValidationMessage For="@(() => Comment.Comments)" />
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="form-group text-center mt-5">
+                            <button class="btnAdd">Add Comment</button>
+                            <br /><br />
+                            <a href="storyChapter/@Chapter.Key" class="btnReturn">Return</a>
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+        <div class="col"></div>
+    </div>
+}
+
+@code {
+    [Parameter] public int ChapterId { get; set; }
+    private StoryChapterDTO Chapter { get; set; } = new StoryChapterDTO();
+    private StoryChapterCommentDTO Comment { get; set; } = new StoryChapterCommentDTO();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var chapter = await storyChapterRepository.GetChapter(ChapterId);
+        Chapter = chapter;
+        Comment.StoryChapterId = Chapter.Id;
+        Comment.StoryChapterKey = Chapter.Key;
+    }
+
+    private async Task AddComment()
+    {
+        var newCommentResult = await storyChapterCommentRepository.Create(Comment);
+        navManager.NavigateTo($"storyChapter/{@Chapter.Key}");
+    }
+}

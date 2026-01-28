@@ -1,0 +1,62 @@
+﻿@page "/phoneVideo/{key}"
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IVideoRepository videoRepository
+@inject IMapper mapper
+
+<div class="">
+    <HeadingC Text="Video" />
+</div>
+<div class="text-center mt-2 pb-2">
+    <a href="phoneVideos" class="pBtnReturn">Return</a>
+</div>
+
+<div class="viewDiv">
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">@Video.YearMonth</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5>@Video.Title</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">Owner: @Video.Owner</h5>
+    </div>
+
+    <div class="divItem mt-1">
+        @((MarkupString)remarks)
+    </div>
+
+    @if (Video != null && Video.VideoUrl.Length > 0)
+    {
+        <div class="mt-2">
+            <video controls="controls" width="100%"><source src="@Video.VideoUrl" /></video>
+        </div>
+    }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+        <ViewPhoneCommentsC Comments="Comments" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Key { get; set; }
+    private VideoDTO Video { get; set; } = new VideoDTO();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string remarks = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var video = await videoRepository.GetVideoByKey(Key);
+        Video = video;
+        if (Video.Comments != null && Video.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<VideoCommentDTO>, List<CommentDTO>>(Video.Comments.ToList());
+            Comments = comments.ToList();
+        }
+        remarks = Video.Remarks;
+        remarks = remarks.Replace("<p>newColumn</p>", "");
+    }
+}

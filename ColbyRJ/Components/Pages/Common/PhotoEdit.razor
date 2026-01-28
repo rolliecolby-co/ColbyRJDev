@@ -1,0 +1,12 @@
+﻿@page "/photoEdit/{element}/{id:int}"
+
+@attribute [Authorize]
+
+<h3>Photo Edit</h3>
+
+@Element - @Id
+
+@code {
+    [Parameter] public string Element { get; set; }
+    [Parameter] public int Id { get; set; }
+}

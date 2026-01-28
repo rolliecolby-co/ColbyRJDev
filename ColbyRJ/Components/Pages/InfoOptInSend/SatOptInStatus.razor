@@ -1,0 +1,51 @@
+﻿@page "/SatOptInStatus"
+
+@inject IOptInSendRepository OptInSendRepository
+@attribute [Authorize]
+
+<h2>Sat OptIn Status</h2>
+<br />
+
+<h3>SendTo Emails</h3>
+<div class="row">
+    <div class="col-12">
+        @foreach (var item in SendTos)
+        {
+            <div class="emailDiv my-3 mx-3">
+                <span class="emailSpan py-2 px-3">
+                    @item.SendToEmail
+                </span>
+            </div>
+        }
+    </div>
+</div>
+<br />
+
+<h3>Sat Status Email</h3>
+<div class="row">
+    <div class="col-12">
+        @((MarkupString)@statusEmail)
+    </div>
+</div>
+
+@code {
+    ICollection<OptInSendToDTO> SendTos { get; set; } = new List<OptInSendToDTO>();
+    private string statusEmail = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        SendTos = await OptInSendRepository.GetOptInEmails();
+        statusEmail = await OptInSendRepository.GetSatStatus();
+    }
+}
+
+<style>
+    .emailDiv {
+        float: left;
+    }
+
+    .emailSpan {
+        border: 1px solid blue;
+        border-radius: 10px;
+    }
+</style>

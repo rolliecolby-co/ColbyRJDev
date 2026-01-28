@@ -1,0 +1,263 @@
+﻿@page "/galleryPhotos"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IGalleryRepository galleryRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col mb-2">
+        <HeadingC Text="Gallery Photos" />
+    </div>
+    <div class=" mb-2 text-center" style="width: 240px;">
+        <a href="galleryPhoto/add" class="btnAdd">Add Gallery Photo</a>
+    </div>
+</div>
+
+<div class="row pt-2">
+    <div class="col-2 mb-2">
+        <SubHeadingC Text="Gallery Sections" />
+    </div>
+    <div class="col mb-2">
+        @if (Sections.Count > 0)
+        {
+            foreach (var item in Sections)
+            {
+                var btnCSS = "";
+                if (selectedSection == item)
+                {
+                    btnCSS = "selectedSection";
+                }
+                <span class="ms-3 mb-2">
+                    <button class="btnSection @btnCSS"
+                            onclick="@(() => SelectedSection(item))">
+                        @item
+                    </button>
+                </span>
+            }
+        }
+    </div>
+</div>
+
+<div class="row pt-2">
+    <div class="col-2 mb-2">
+        <SubHeadingC Text="Gallery Decades" />
+    </div>
+    <div class="col mb-2">
+        @if (Decades.Count > 0)
+        {
+            foreach (var item in Decades)
+            {
+                var btnCSS = "";
+                if (selectedDecade == item)
+                {
+                    btnCSS = "selectedDecade";
+                }
+                <span class="ms-3 mb-2">
+                    <button class="btnDecade @btnCSS"
+                            onclick="@(() => SelectedDecade(item))">
+                        @item
+                    </button>
+                </span>
+            }
+        }
+    </div>
+</div>
+
+@if (Photos.Count > 0)
+{
+    <div class="row pt-2">
+        @foreach (var item in Photos)
+        {
+            <div class="col-4">
+                <div class="photoCard mb-2">
+                    <div class="photoCaption text-center">
+                        @item.Caption
+                    </div>
+                    <div class="photoBody text-center">
+                        <img src="@item.PhotoUrl" class="img-fluid photoBorder" />
+                    </div>
+                    <div class="photoFooter">
+                        <div class="row">
+                            <div class="col-6 text-center">
+                                @item.Section.Section
+                            </div>
+                            <div class="col-6 text-center mb-2">
+                                @item.YearMon
+                            </div>
+                            <div class="col-6 text-center">
+                                @item.OrderBy
+                            </div>
+                            <div class="col-6 text-center">
+                                <a href="@($"galleryPhoto/edit/{item.Id}")" class="btnEdit">Edit</a>
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteGalleryPhotoDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@if (showAlert)
+{
+    <div class="row pt-2">
+        <div class="col-4">
+            <div class="alert alert-info">
+                Select a Section or a Decade to Review the corresponding Photos
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    List<GalleryPhotoDTO> allPhotos;
+    List<GalleryPhotoDTO> Photos = new List<GalleryPhotoDTO>();
+    List<string> Sections = new List<string>();
+    List<string> Decades = new List<string>();
+    bool showAlert = true;
+    string selectedSection = "zzz";
+    string selectedDecade = "zzz";
+    private int DeleteGalleryPhotoId { get; set; } = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPhotos();
+    }
+
+    private async Task LoadPhotos()
+    {
+        var result = await galleryRepository.GetPhotos();
+        allPhotos = result.ToList();
+
+        var tSections = allPhotos
+            .OrderBy(q => q.Section.OrderBy)
+            .ThenBy(q => q.Section.Section)
+            .Select(q => q.Section.Section)
+            .ToList();
+        Sections = tSections.AsQueryable().Distinct().ToList();
+
+        var tDecades = allPhotos
+            .OrderBy(q => q.Decade.Decade)
+            .Select(q => q.Decade.Decade)
+            .ToList();
+        Decades = tDecades.AsQueryable().Distinct().ToList();
+    }
+
+    private void SelectedDecade(string decadeStr)
+    {
+        selectedDecade = decadeStr;
+        selectedSection = "zzz";
+        showAlert = false;
+
+        Photos = allPhotos
+            .Where(q => q.Decade.Decade == selectedDecade)
+            .OrderBy(q => q.YearMon)
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    private void SelectedSection(string sectionStr)
+    {
+        selectedSection = sectionStr;
+        selectedDecade = "zzz";
+        showAlert = false;
+
+        Photos = allPhotos
+            .Where(q => q.Section.Section == selectedSection)
+            .OrderBy(q => q.YearMon)
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await galleryRepository.DeletePhoto(DeleteGalleryPhotoId);
+            DeleteDialogOpen = false;
+            await LoadPhotos();
+        }
+        DeleteDialogOpen = false;
+        
+        if (selectedDecade != "zzz")
+        {
+            Photos = allPhotos
+                .Where(q => q.Decade.Decade == selectedDecade)
+                .OrderBy(q => q.YearMon)
+                .ToList();
+        }
+        if (selectedSection != "zzz")
+        {
+            Photos = allPhotos
+                 .Where(q => q.Section.Section == selectedSection)
+                 .OrderBy(q => q.YearMon)
+                 .ToList();
+        }
+        StateHasChanged();
+    }
+
+    private void OpenDeleteGalleryPhotoDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteGalleryPhotoId = id;
+        Text = "Do you want to delete this Gallery Photo?";
+        StateHasChanged();
+    }
+}
+
+<style>
+
+    .btnDecade {
+        color: white;
+        background-color: #E67E22;
+        border: 2px solid #E67E22;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+        .btnDecade:hover {
+            color: black;
+            background-color: white;
+            font-size: 1.2rem;
+        }
+
+    .selectedDecade {
+        border: 5px solid lightgray;
+        border-radius: 10px;
+    }
+
+    .btnSection {
+        color: white;
+        background-color: dodgerblue;
+        border: 2px solid dodgerblue;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+        .btnSection:hover {
+            color: black;
+            background-color: white;
+            font-size: 1.2rem;
+        }
+
+    .selectedSection {
+        border: 5px solid lightgray;
+        border-radius: 10px;
+    }
+</style>

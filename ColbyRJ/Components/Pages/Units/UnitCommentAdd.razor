@@ -1,0 +1,67 @@
+﻿@page "/unitComment/add/{UnitId:int}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IUnitRepository unitRepository
+@inject IUnitCommentRepository unitCommentRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-6">
+        <HeadingC Text="Add MIlitary Unit Comment" />
+
+        <div class="row mt-2">
+            <div class="col-4 pt-2 text-center">
+                Owner / Military Unit / Unit Location
+            </div>
+            <div class="col">
+                <SubHeadingC Text="@unitStr" />
+            </div>
+        </div>
+
+        <EditForm Model="Comment" OnValidSubmit="AddComment">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group">
+                        <label><b>Your Comment</b></label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@Comment.Comments" Height="500px" />
+                        <ValidationMessage For="@(() => Comment.Comments)" />
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="form-group text-center mt-5">
+                        <button class="btnAdd">Add Comment</button>
+                        <br /><br />
+                        <a href="unitBrowse/@Unit.Id" class="btnReturn">Return</a>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+@code {
+    [Parameter] public int UnitId { get; set; }
+    private UnitDTO Unit { get; set; } = new UnitDTO();
+    private UnitCommentDTO Comment { get; set; } = new UnitCommentDTO();
+    string unitStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var unit = await unitRepository.GetUnit(UnitId);
+        Unit = unit;
+        unitStr = Unit.Owner + " / " + Unit.MilitaryUnit + " / " + Unit.UnitLocation;
+        Comment.UnitHistoryId = UnitId;
+    }
+
+    private async Task AddComment()
+    {
+        var newCommentResult = await unitCommentRepository.Create(Comment);
+        navManager.NavigateTo($"unit/{Unit.Id}");
+    }
+}

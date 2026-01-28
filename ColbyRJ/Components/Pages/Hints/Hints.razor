@@ -1,0 +1,120 @@
+﻿@page "/hints"
+@rendermode InteractiveServer
+
+@layout AdminLayout
+
+@inject IHintRepository hintRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row ">
+    <div class="col mb-2 ">
+        <HeadingC Text="Hints" />
+    </div>
+    <div class="col mb-2 text-center">
+        <select value="@selectedPage" class="form-select" @onchange="OnPageChanged">
+            <option value="">-- Filter By Page --</option>
+            <option value="Browse">Browse</option>
+            <option value="Post / Edit">Post / Edit</option>
+            <option value="Admin">Admin</option>
+        </select>
+    </div>
+    <div class="mb-2 text-center" style="width: 200px;">
+        <a href="hint/add" class="btnAdd">Add New Hint</a>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col"></div>
+    <div class="col-8">
+        <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@hints" TItem="HintDTO"
+                        PagerHorizontalAlign="HorizontalAlign.Center">
+            <Columns>
+                <RadzenDataGridColumn Property="Key" Title="Key" Width="120px"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="OrderBy" Title="Order By" Width="120px"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Title" Title="Title" HeaderCssClass="rz-background-color-info-lighter" />
+
+                <RadzenDataGridColumn Property="Id" Width="80px" HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        <RadzenButton ButtonStyle="ButtonStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" class="m-1"
+                                      Click=@(() => EditHint(data.Id)) Text="Edit" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="Id" Width="70px" HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                      Click=@(() => DeleteHint(data.Id)) />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+    <div class="col"></div>
+</div>
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<HintDTO> hints;
+    private List<HintDTO> allHints;
+    string selectedPage = "";
+    private int DeleteHintId { get; set; } = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHints();
+    }
+
+    private async Task LoadHints()
+    {
+        var result = await hintRepository.GetHints();
+        allHints = result.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await hintRepository.Delete(DeleteHintId);
+            DeleteDialogOpen = false;
+            await LoadHints();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteHintDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteHintId = id;
+        Text = $"Do you want to delete this Hint?";
+        StateHasChanged();
+    }
+
+    void DeleteHint(int Id)
+    {
+        OpenDeleteHintDialog(Id);
+    }
+
+    void EditHint(int Id)
+    {
+        navManager.NavigateTo($"/hint/edit/{Id}");
+    }
+
+    private void OnPageChanged(ChangeEventArgs e)
+    {
+        selectedPage = e.Value.ToString();
+        hints = allHints.Where(q => q.Page == selectedPage).ToList();
+        StateHasChanged();
+    }
+
+}

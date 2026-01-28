@@ -1,0 +1,273 @@
+﻿@page "/browsePhotoGallery"
+@rendermode InteractiveServer
+
+@layout BrowseLayout
+
+@inject IGalleryRepository galleryRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2">
+        <HeadingC Text="Gallery Photos" />
+    </div>
+    <div class="col mb-2">
+        <div class="row">
+            <div class="col">
+                @if (sizeClass != "col-4")
+                {
+                    <div class="text-center">
+                        <button class="btnSize"
+                                onclick="@(() => ResetSize("small"))">
+                            Small Photos
+                        </button>
+                    </div>
+                }
+            </div>
+            <div class="col">
+                @if (sizeClass != "col-6")
+                {
+                    <div class="text-center">
+                        <button class="btnSize"
+                                onclick="@(() => ResetSize("medium"))">
+                            Medium Photos
+                        </button>
+                    </div>
+                }
+            </div>
+            <div class="col">
+                @if (sizeClass != "col-12")
+                {
+                    <div class="text-center">
+                        <button class="btnSize"
+                                onclick="@(() => ResetSize("large"))">
+                            Large Photos
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row pt-2">
+    <div class="col-2 mb-2">
+        <SubHeadingC Text="Gallery Sections" />
+    </div>
+    <div class="col mb-2">
+        @if (Sections.Count > 0)
+        {
+            foreach (var item in Sections)
+            {
+                var btnCSS = "";
+                if (selectedSection == item)
+                {
+                    btnCSS = "selectedSection";
+                }
+                <span class="ms-3 mb-2">
+                    <button class="btnSection @btnCSS"
+                            onclick="@(() => SelectedSection(item))">
+                        @item
+                    </button>
+                </span>
+            }
+        }
+    </div>
+</div>
+
+<div class="row pt-2">
+    <div class="col-2 mb-2">
+        <SubHeadingC Text="Gallery Decades" />
+    </div>
+    <div class="col mb-2">
+        @if (Decades.Count > 0)
+        {
+            foreach (var item in Decades)
+            {
+                var btnCSS = "";
+                if (selectedDecade == item)
+                {
+                    btnCSS = "selectedDecade";
+                }
+                <span class="ms-3 mb-2">
+                    <button class="btnDecade @btnCSS"
+                            onclick="@(() => SelectedDecade(item))">
+                        @item
+                    </button>
+                </span>
+            }
+        }
+    </div>
+</div>
+
+@if (Photos.Count > 0)
+{
+    <div class="row pt-2">
+        @foreach (var item in Photos)
+        {
+            <div class="@sizeClass">
+                <div class="photoCard mb-2">
+                    <div class="photoCaption text-center">
+                        @item.Caption
+                    </div>
+                    <div class="photoBody text-center">
+                        <img src="@item.PhotoUrl" class="img-fluid photoBorder" />
+                    </div>
+                    <div class="photoFooter">
+                        <div class="row">
+                            <div class="col-6 text-center">
+                                @item.Section.Section
+                            </div>
+                            <div class="col-6 text-center mb-2">
+                                @item.YearMon
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (showAlert)
+{
+    <div class="row pt-2">
+        <div class="col-4">
+            <div class="alert alert-info">
+                Select a Section or a Decade to Browse the corresponding Photos
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    List<GalleryPhotoDTO> allPhotos;
+    List<GalleryPhotoDTO> Photos = new List<GalleryPhotoDTO>();
+    List<string> Sections = new List<string>();
+    List<string> Decades = new List<string>();
+    bool showAlert = true;
+    string selectedSection = "zzz";
+    string selectedDecade = "zzz";
+    string sizeClass = "col-4";
+
+    protected override async Task OnInitializedAsync()
+    {
+        sizeClass = "col-4";
+        await LoadPhotos();
+    }
+
+    private async Task LoadPhotos()
+    {
+        var result = await galleryRepository.GetAllPhotos();
+        allPhotos = result.ToList();
+
+        var tSections = allPhotos
+            .OrderBy(q => q.Section.OrderBy)
+            .ThenBy(q => q.Section.Section)
+            .Select(q => q.Section.Section)
+            .ToList();
+        Sections = tSections.AsQueryable().Distinct().ToList();
+
+        var tDecades = allPhotos
+            .OrderBy(q => q.Decade.Decade)
+            .Select(q => q.Decade.Decade)
+            .ToList();
+        Decades = tDecades.AsQueryable().Distinct().ToList();
+    }
+
+    private void SelectedDecade(string decadeStr)
+    {
+        selectedDecade = decadeStr;
+        selectedSection = "zzz";
+        showAlert = false;
+
+        Photos = allPhotos
+            .Where(q => q.Decade.Decade == selectedDecade)
+            .OrderBy(q => q.YearMon)
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    private void SelectedSection(string sectionStr)
+    {
+        selectedSection = sectionStr;
+        selectedDecade = "zzz";
+        showAlert = false;
+
+        Photos = allPhotos
+            .Where(q => q.Section.Section == selectedSection)
+            .OrderBy(q => q.YearMon)
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    private void ResetSize(string sizeStr)
+    {
+        if (sizeStr == "small")
+        {
+            sizeClass = "col-4";
+        }
+        if (sizeStr == "medium")
+        {
+            sizeClass = "col-6";
+        }
+        if (sizeStr == "large")
+        {
+            sizeClass = "col-12";
+        }
+    }
+}
+
+<style>
+
+    .btnDecade {
+        color: white;
+        background-color: #E67E22;
+        border: 2px solid #E67E22;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+        .btnDecade:hover {
+            color: black;
+            background-color: white;
+            font-size: 1.2rem;
+        }
+
+    .selectedDecade {
+        border: 5px solid lightgray;
+        border-radius: 10px;
+    }
+
+    .btnSection {
+        color: white;
+        background-color: dodgerblue;
+        border: 2px solid dodgerblue;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+        .btnSection:hover {
+            color: black;
+            background-color: white;
+            font-size: 1.2rem;
+        }
+
+    .btnSize {
+        color: black;
+        background-color: #D5D8DC;
+        border: 2px solid #D5D8DC;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+    .selectedSection {
+        border: 5px solid lightgray;
+        border-radius: 10px;
+    }
+</style>

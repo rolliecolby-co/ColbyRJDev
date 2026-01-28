@@ -1,0 +1,120 @@
+﻿@page "/storyChapterComments/{chapterId:int}"
+
+@layout PostEditLayout
+
+
+@inject IStoryChapterRepository storyChapterRepository
+@inject IStoryChapterCommentRepository storyChapterCommentRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Story Comments: Title - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="storyChapter/edit/@ChapterId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (comments != null && comments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-4 pt-2 text-center">
+            Grouped By / Story
+        </div>
+        <div class="col-6">
+            <SubHeadingC Text="@storyStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-2">
+        <div class="col"></div>
+        <div class="col-3 pt-2 text-center">
+            Story Chapter
+        </div>
+        <div class="col-5">
+            <SubSubHeadingC Text="@storyChapterStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in comments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteStoryChapterCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int ChapterId { get; set; }
+    private StoryChapterDTO Chapter { get; set; } = new StoryChapterDTO();
+    private List<StoryChapterCommentDTO> comments { get; set; } = new List<StoryChapterCommentDTO>();
+    private int DeleteStoryChapterCommentId { get; set; } = 0;
+    string storyStr = "";
+    string storyChapterStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var chapter = await storyChapterRepository.GetChapter(ChapterId);
+        Chapter = chapter;
+        storyStr = Chapter.Story.GroupedBy + " / " + Chapter.Story.Title;
+        storyChapterStr = Chapter.Title;
+
+        await LoadStoryChapterComments();
+    }
+
+    private async Task LoadStoryChapterComments()
+    {
+        var vComments = await storyChapterCommentRepository.GetComments(ChapterId);
+        comments = vComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await storyChapterCommentRepository.Delete(DeleteStoryChapterCommentId);
+            DeleteDialogOpen = false;
+            await LoadStoryChapterComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteStoryChapterCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteStoryChapterCommentId = id;
+        Text = "Do you want to delete this Story Chapter Comment?";
+        StateHasChanged();
+    }
+
+}

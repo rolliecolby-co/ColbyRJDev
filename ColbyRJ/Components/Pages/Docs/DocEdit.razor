@@ -1,0 +1,305 @@
+﻿@page "/doc/edit/{DocId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IDocRepository docRepository
+@inject IDocPdfRepository docPdfRepository
+@inject IFileUpload fileUpload
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <HeadingC Text="Edit Document" />
+</div>
+
+@if (!IsLoading)
+{
+    <EditForm Model="Doc" OnValidSubmit="UpdateDoc">
+        <DataAnnotationsValidator />
+        <IsProcessingC IsProcessing="IsProcessing" />
+        <StatusMessageC MessageType="@MessageType" MessageBody="@MessageBody" />
+
+        <div class="row mt-3">
+            <div class="col">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label><b>Title</b></label>
+                            <InputText @bind-Value="Doc.Title" class="form-control"></InputText>
+                            <ValidationMessage For="() => Doc.Title"></ValidationMessage>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <label>Owner</label>
+                        <div class="divDisabled">
+                            @Doc.Owner
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <label>Grouped By</label>
+                        <div class="divDisabled">
+                            @Doc.GroupedBy
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-3 text-center">
+                            <a href="groupBy/edit/doc/@Doc.Id" class="btnEdit">Edit Grouped By</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <label>When</label>
+                        <div class="divDisabled">
+                            @Doc.YearMonth
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-3 text-center">
+                            <a href="yearMon/edit/doc/@Doc.Id" class="btnEdit">Edit Year Month</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col">
+                        <div class="form-group text-center">
+                            <label>Active</label> &nbsp
+                            <InputCheckbox @bind-Value="Doc.Active" class="form-check-input"></InputCheckbox>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="divDisabled text-center">
+                            @Doc.Pdfs.Count Pdf(s)
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="divDisabled text-center">
+                            @Doc.Comments.Count Comment(s)
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col">
+                        <div class="form-group text-center">
+                            <button class="btnSave">Save</button>
+                            <a href="docs" class="btnReturn ms-3">Return</a>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="alertInfo">
+                            Save after uploading Pdfs and after any changes.
+                            <br />
+                            Also, Save any changes prior to Reviewing Pdfs or Reviewing Comments.
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        @if (Doc.Pdfs.Count > 0)
+                        {
+                            <div class="">
+                                <a href="docPdfs/@Doc.Id" class="btnReview">Review Pdfs</a>
+                                <div class="alertInfo mt-3">
+                                    To set the Order, to Edit Captions or to Edit Pdf Dates
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="col">
+                        @if (Doc.Comments.Count > 0)
+                        {
+                            <div class="">
+                                <a href="docComments/@Doc.Id" class="btnReview">Review Comments</a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-5">
+                <div class="form-group">
+                    <label><b>Document Remarks</b></label>
+                    <RZHtmlEditorLteC @bind-HtmlValue="@Doc.Remarks" Height="600px" />
+                    <ValidationMessage For="() => Doc.Remarks"></ValidationMessage>
+                </div>
+                <div class="alert alert-info mt-2">
+                    If you would like your long narrative displayed in 2 columns,
+                    enter newColumn in a new paragraph at the desired column break point.
+                    <br />
+                    And if you would like the narrative displayed in 3 columns,
+                    enter newColumn again in a new paragraph at the desired column break point.
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="mb-2">Document Pdfs</div>
+                <div class="form-group">
+                    <InputFile accept=".pdf" OnChange="HandlePdfUpload" multiple></InputFile>
+                    <div class="row">
+                        @if (IsPdfUploadProcessStarted)
+                        {
+                            <div class="col-md-12">
+                                <span><i class="fa fa-spin fa-spinner"></i> Please wait ... Pdfs are uploading...</span>
+                            </div>
+                        }
+                        @if (Doc.PdfUrls != null && Doc.PdfUrls.Count > 0)
+                        {
+                            int serial = 1;
+                            foreach (var pdf in Doc.PdfUrls)
+                            {
+                                <div class="col-4 mt-3">
+                                    <div class="pdf-edit">
+                                        <embed src="@pdf" style="width: 100%; height: 400px;" />
+                                        <span class="pdf-edit-title">@serial</span>
+                                    </div>
+
+                                    <button type="button" @onclick="()=>DeletePdf(pdf)" class="btnDelete mt-4">
+                                        Delete
+                                    </button>
+                                </div>
+                                serial++;
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-6">
+                <div class="alertInfo">
+                    May upload multiple .pdf files
+                    <br />
+                    Use ctrl key to select multiple files for upload, or upload 1 at a time
+                    <br />
+                    Max file size is 25 mb / May have to upload 1 or 2 at a time
+                    <br />
+                    The pdf will be displayed for each valid file
+                    <br />
+                    Selecting a larger file may cause the upload to hang
+                </div>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int DocId { get; set; }
+    private DocDTO Doc { get; set; } = new DocDTO();
+
+    public bool IsProcessing { get; set; } = false;
+    public bool IsPdfUploadProcessStarted { get; set; }
+    public bool IsLoading { get; set; } = true;
+    public string MessageType { get; set; }
+    public string MessageBody { get; set; }
+    public string Wysiwyg { get; set; }
+    private DocPdfDTO DocPdf { get; set; } = new DocPdfDTO();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLoading = true;
+
+        await GetDoc();
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task GetDoc()
+    {
+        Doc = new DocDTO();
+
+        var doc = await docRepository.GetDoc(DocId);
+        Doc = doc;
+        if (Doc?.Pdfs != null)
+        {
+            Doc.PdfUrls = Doc.Pdfs.Select(u => u.PdfUrl).ToList();
+        }
+    }
+
+    private async Task UpdateDoc()
+    {
+        IsProcessing = true;
+        MessageType = "ok";
+        MessageBody = "";
+
+        var updateDocResult = await docRepository.Update(Doc);      
+
+        await GetDoc();
+
+        MessageBody = "Document Updated";
+        IsProcessing = false;
+        StateHasChanged();
+    }
+
+    private async Task HandlePdfUpload(InputFileChangeEventArgs e)
+    {
+        IsProcessing = true;
+        try
+        {
+            var pdfs = new List<string>();
+            if (e.GetMultipleFiles().Count > 0)
+            {
+                foreach (var file in e.GetMultipleFiles())
+                {
+                    System.IO.FileInfo fileInfo = new System.IO.FileInfo(file.Name);
+                    if (fileInfo.Extension.ToLower() == ".pdf")
+                    {
+                        var uploadedPdf = await fileUpload.UploadFile(file, "docPdfs");
+                        var uploadedPdfPath = $"docPdfs/{uploadedPdf}";
+                        pdfs.Add(uploadedPdfPath);
+
+                        DocPdf = new DocPdfDTO()
+                            {
+                                DocId = DocId,
+                                PdfUrl = uploadedPdfPath
+                            };
+                        await docPdfRepository.Create(DocPdf);
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+
+                if (pdfs.Any())
+                {
+                    if (Doc.PdfUrls != null && Doc.PdfUrls.Any())
+                    {
+                        Doc.PdfUrls.AddRange(pdfs);
+                    }
+                    else
+                    {
+                        Doc.PdfUrls = new List<string>();
+                        Doc.PdfUrls.AddRange(pdfs);
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+        catch {}
+        IsProcessing = false;
+    }
+
+    internal async void DeletePdf(string pdfUrl)
+    {
+        IsProcessing = true;
+        var pdfIndex = Doc.PdfUrls.FindIndex(x => x == pdfUrl);
+        var pdfName = pdfUrl.ToLower();
+        pdfName = pdfName.Replace("docpdfs/", "");
+
+        var deleteResponse = fileUpload.DeleteFile(pdfName, "docPdfs");
+
+        await docPdfRepository.DeletePdfByPdfUrl(pdfUrl);
+
+        Doc.PdfUrls.RemoveAt(pdfIndex);
+        IsProcessing = false;
+        StateHasChanged();
+    }
+}

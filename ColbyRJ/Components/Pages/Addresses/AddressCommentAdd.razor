@@ -1,0 +1,67 @@
+﻿@page "/addressComment/add/{AddressId:int}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IAddressRepository addressRepository
+@inject IAddressCommentRepository addressCommentRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-6">
+        <HeadingC Text="Add Home Address Comment" />
+
+        <div class="row mt-2">
+            <div class="col-4 pt-2 text-center">
+                Owner / Home Address
+            </div>
+            <div class="col">
+                <SubHeadingC Text="@addressStr" />
+            </div>
+        </div>
+
+        <EditForm Model="Comment" OnValidSubmit="AddComment">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group">
+                        <label><b>Your Comment</b></label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@Comment.Comments" Height="500px" />
+                        <ValidationMessage For="@(() => Comment.Comments)" />
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="form-group text-center mt-5">
+                        <button class="btnAdd">Add Comment</button>
+                        <br /><br />
+                        <a href="addressBrowse/@Address.Id" class="btnReturn">Return</a>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+@code {
+    [Parameter] public int AddressId { get; set; }
+    private AddressDTO Address { get; set; } = new AddressDTO();
+    private AddressCommentDTO Comment { get; set; } = new AddressCommentDTO();
+    string addressStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var address = await addressRepository.GetAddress(AddressId);
+        Address = address;
+        addressStr = Address.Owner + " / " + Address.HomeAddress;
+        Comment.AddressHistoryId = AddressId;
+    }
+
+    private async Task AddComment()
+    {
+        var newCommentResult = await addressCommentRepository.Create(Comment);
+        navManager.NavigateTo($"address/{Address.Id}");
+    }
+}

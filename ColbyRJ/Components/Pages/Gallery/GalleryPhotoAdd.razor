@@ -1,0 +1,141 @@
+﻿@page "/galleryPhoto/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IHttpContextAccessor httpContext
+@inject IGalleryRepository galleryRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col"></div>
+    <div class="col-6 ">
+        <HeadingC Text="Add Gallery Photo" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-3">
+    <div class="col"></div>
+    <div class="col-6">
+        @if (Sections.Count > 0 && Decades.Count > 0)
+        {
+            <EditForm Model="Photo" OnValidSubmit="AddPhoto">
+                <DataAnnotationsValidator />
+
+                <div class="row mt-2">
+                    <div class="col">
+                        <div class="form-group">
+                            <label>Gallery Section</label>
+                            <InputSelect @bind-Value="@Photo.GallerySectionId" class="form-select">
+                                <option value=0 selected>-- Select Gallery Section --</option>
+                                @foreach (var item in Sections)
+                                {
+                                    <option value="@item.Id">@item.Section</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => Photo.GallerySectionId"></ValidationMessage>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label>Decade</label>
+                            <InputSelect @bind-Value="@Photo.GalleryDecadeId" class="form-select">
+                                <option value=0 selected>-- Select Decade --</option>
+                                @foreach (var item in Decades)
+                                {
+                                    <option value="@item.Id">@item.Decade</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => Photo.GalleryDecadeId"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <div class="form-group">
+                            <label>Caption</label>
+                            <InputText @bind-Value="Photo.Caption" class="form-control"></InputText>
+                            <ValidationMessage For="() => Photo.Caption"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <div class="form-group ">
+                            <label>Photo Year (optional)</label>
+                            <InputText @bind-Value="Photo.YearStr" class="form-control"></InputText>
+                            <ValidationMessage For="() => Photo.YearStr"></ValidationMessage>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group ">
+                            <label>Photo Month (optional)</label>
+                            <InputText @bind-Value="Photo.MonthStr" class="form-control"></InputText>
+                            <ValidationMessage For="() => Photo.MonthStr"></ValidationMessage>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="alertInfo">
+                            <p>
+                                Enter the appropriate integer for the Month
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col text-center">
+                        <div class="form-group pt-3">
+                            <button class="btnAdd">Add Photo</button>
+                            <a href="galleryPhotos" class="btnReturn">Return</a>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="alertInfo">
+                            <p>
+                                When completing the Add Gallery Photo, a partial completion, you
+                                will be directed to the Update Gallery Photo page to complete the Gallery Photo.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </EditForm>
+        }
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    private GalleryPhotoDTO Photo { get; set; } = new GalleryPhotoDTO();
+    private List<GallerySectionDTO> Sections = new List<GallerySectionDTO>();
+    private List<GalleryDecadeDTO> Decades = new List<GalleryDecadeDTO>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSections();
+        await LoadDecades();
+    }
+
+    private async Task LoadSections()
+    {
+        var result = await galleryRepository.GetSections();
+        Sections = result.ToList();
+    }
+
+    private async Task LoadDecades()
+    {
+        var result = await galleryRepository.GetDecades();
+        Decades = result.ToList();
+    }
+
+    private async Task AddPhoto()
+    {
+        var response = await galleryRepository.CreatePhoto(Photo);
+        if (response.Substring(0, 2) == "id")
+        {
+            navManager.NavigateTo($"galleryPhoto/edit/{response.Substring(3)}");
+        }
+    }
+}

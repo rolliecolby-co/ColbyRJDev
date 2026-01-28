@@ -1,0 +1,61 @@
+﻿@page "/broadcastEmail/{id:int}"
+
+@layout PostEditLayout
+
+@inject IJSRuntime JS
+@inject IBroadcastEmailRepository broadcastEmailRepository
+
+<div class="row ">
+    <div class="col"></div>
+    <div class="col-6">
+        <HeadingC Text="Broadcast Email" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-2">
+    <div class="col"></div>
+    <div class="col-6">
+        <div class="row mt-2">
+            <div class="col">
+                <div class="">
+                    <label>Send To</label>
+                    <div class="divDisabled">
+                        @bEmail.SentTo
+                    </div>
+                </div>
+                <div class="mt-3 text-center">
+                    <div class="form-group pt-3">
+                        <a href="broadcastEmails" class="btnReturn ms-2">Return</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-8">
+                <div class="form-group">
+                    <label>Subject</label>
+                    <div class="divDisabled">
+                        @bEmail.Subject
+                    </div>
+                </div>
+                <div class="form-group mt-2">
+                    <label>The Message</label>
+                    <div class="divDisabled">
+                        @((MarkupString)bEmail.Message)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private BroadcastEmailDTO bEmail { get; set; } = new BroadcastEmailDTO();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var broadcastEmail = await broadcastEmailRepository.GetBroadcastEmail(Id);
+        bEmail = broadcastEmail;
+    }
+}

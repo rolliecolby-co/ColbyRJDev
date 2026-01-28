@@ -1,0 +1,122 @@
+﻿@page "/topics"
+@rendermode InteractiveServer
+
+@layout AdminLayout
+
+@inject ITopicRepository topicRepository
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row ">
+    <div class="col mb-2 ">
+        <HeadingC Text="Category / Section / Topic" />
+    </div>
+    <div class="mb-2 text-center" style="width: 220px;">
+        <a href="topic/add" class="btnAdd">Add New Topic</a>
+    </div>
+</div>
+
+<div class="row mt-1">
+    <div class="col">
+        @if (topics == null)
+        {
+            <div>
+                <h5>Loading ...</h5>
+            </div>
+        }
+        else
+        {
+            if (topics.Any())
+            {
+                <div class="row">
+                    @foreach (var topic in topics)
+                    {
+                        categorySection = topic.Section.Category.Name + " - " + topic.Section.Name;
+                        if (categorySectionPrev != categorySection)
+                        {
+                            <div class="col-12">
+                                <div class="sectionHeader">
+                                    <b>@categorySection</b>
+                                </div>
+                            </div>
+                        }
+                        categorySectionPrev = categorySection;
+                        <div class="col-3">
+                            <div class="listCard">
+                                <table style="width: 100%;">
+                                    <tr>
+                                        <td>
+                                            <b>@topic.Name</b>
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="@($"topic/edit/{topic.Id}")" class="btnEdit">Edit</a>
+                                            <button type="button" class="btnDelete" onclick="@(()=> OpenDeleteTopicDialog(topic.Id))">D</button>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p>No records found</p>
+            }
+        }
+    </div>
+</div>
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<TopicDTO> topics;
+
+    public bool IsLoading { get; set; }
+    private int DeleteTopicId { get; set; } = 0;
+    private string categorySectionPrev = "zzz";
+    private string categorySection = "123";
+
+    protected override async Task OnInitializedAsync()
+    {
+        categorySectionPrev = "zzz";
+        await LoadTopics();
+    }
+
+    private async Task LoadTopics()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        var tTopics = await topicRepository.GetTopics();
+        topics = tTopics.ToList();
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await topicRepository.Delete(DeleteTopicId);
+            DeleteDialogOpen = false;
+            await LoadTopics();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteTopicDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteTopicId = id;
+        Text = "Do you want to delete this Topic?";
+        StateHasChanged();
+    }
+}

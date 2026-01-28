@@ -1,0 +1,107 @@
+﻿@page "/snippetPhotos/{snippetId:int}"
+
+@layout EditLayout
+@inject ISnippetRepository snippetRepository
+@inject ISnippetPhotoRepository snippetPhotoRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Snippet Photos: Caption - Photo - Order # - When" />
+    </div>
+    <div class="col text-center">
+        <a href="snippet/edit/@SnippetId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (Snippet != null && Photos != null && Photos.Any())
+{
+    <div class="row ">
+        <div class="col-3 text-center">
+            Grouped By: @Snippet.GroupedBy
+        </div>
+        <div class="col-3 text-center">
+            Snippet: <b>@Snippet.Title</b>
+        </div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in Photos)
+        {
+            <div class="col-4">
+                <div class="photoCard">
+                    <div class="photoCaption text-center">
+                        @item.Caption
+                    </div>
+                    <div class="photoBody text-center">
+                        <img src="@item.PhotoUrl" class="img-fluid photoBorder" />
+                    </div>
+                    <div class="photoFooter">
+                        <div class="row">
+                            <div class="col text-center">
+                                @item.OrderBy
+                            </div>
+                            <div class="col text-center">
+                                @item.PhotoDateStr
+                            </div>
+                            <div class="col text-end">
+                                <a href="@($"snippetPhoto/edit/{item.Id}")" class="btnEdit">Edit</a>
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteSnippetPhotoDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int SnippetId { get; set; }
+    private SnippetDTO Snippet { get; set; } = new SnippetDTO();
+    List<SnippetPhotoDTO> Photos { get; set; } = new List<SnippetPhotoDTO>();
+    private int DeleteSnippetPhotoId { get; set; } = 0;
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var snippet = await snippetRepository.GetSnippet(SnippetId);
+        Snippet = snippet;
+
+        await LoadSnippetPhotos();
+        StateHasChanged();
+    }
+
+    private async Task LoadSnippetPhotos()
+    {
+        var photos = await snippetPhotoRepository.GetPhotos(SnippetId);
+        Photos = photos.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await snippetPhotoRepository.Delete(DeleteSnippetPhotoId);
+            DeleteDialogOpen = false;
+            await LoadSnippetPhotos();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteSnippetPhotoDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteSnippetPhotoId = id;
+        Text = "Do you want to delete this Snippet Photo?";
+        StateHasChanged();
+    }
+
+}

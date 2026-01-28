@@ -1,0 +1,96 @@
+﻿@page "/galleryDecades"
+@rendermode InteractiveServer
+
+@layout AdminLayout
+
+@inject IGalleryRepository galleryRepository
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row ">
+    <div class="col mb-2">
+        <HeadingC Text="Gallery Decades" />
+    </div>
+    <div class="mb-2 text-center" style="width: 220px;">
+        <a href="galleryDecade/add" class="btnAdd">Add Gallery Decade</a>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-4">
+        <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@decades" TItem="GalleryDecadeDTO"
+                        PagerHorizontalAlign="HorizontalAlign.Center">
+            <Columns>
+                <RadzenDataGridColumn Property="Decade" Title="Decade" HeaderCssClass="rz-background-color-info-lighter" />
+
+                <RadzenDataGridColumn Property="Id" Width="80px" HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        <RadzenButton ButtonStyle="ButtonStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" class="m-1"
+                                      Click=@(() => EditDecade(data.Id)) Text="Edit" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="Id" Width="70px" HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                      Click=@(() => DeleteDecade(data.Id)) />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+</div>
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<GalleryDecadeDTO> decades;
+    private int DeleteDecadeId { get; set; } = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDecades();
+    }
+
+    private async Task LoadDecades()
+    {
+        var result = await galleryRepository.GetDecades();
+        decades = result.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await galleryRepository.DeleteDecade(DeleteDecadeId);
+            DeleteDialogOpen = false;
+            await LoadDecades();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteDecadeDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteDecadeId = id;
+        Text = $"Do you want to delete this Gallery Decade?";
+        StateHasChanged();
+    }
+
+    async Task DeleteDecade(int Id)
+    {
+        OpenDeleteDecadeDialog(Id);
+    }
+
+    void EditDecade(int Id)
+    {
+        navManager.NavigateTo($"/galleryDecade/edit/{Id}");
+    }
+
+}

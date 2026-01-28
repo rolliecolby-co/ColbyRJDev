@@ -1,0 +1,171 @@
+﻿@page "/units"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IUnitRepository unitRepository
+
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2 pt-2">
+        <HeadingC Text="Military Unit History" />
+    </div>
+    <div class="mb-2 text-center" style="width: 240px;">
+        <a href="unit/add" class="btnAdd">Add New Military Unit</a>
+    </div>
+</div>
+
+@if (units != null && units.Any())
+{
+    whoPrev = "zzz";
+    <div class="row mt-1">
+        <div class="col">
+            <div class="sectionHeader">
+                Select For Whom
+            </div>
+        </div>
+        <div class="col-md-10">
+            @foreach (var itemW in units)
+            {
+                if (whoPrev != itemW.Who)
+                {
+                    var btnCSS = "";
+                    if (selectedWho == itemW.Who)
+                    {
+                        btnCSS = "selectedWho";
+                    }
+                    <span class="ms-3 mb-2">
+                        <button class="btnWho @btnCSS"
+                                onclick="@(() => SelectedWho(itemW.Who))">
+                            @itemW.Who
+                        </button>
+                    </span>
+                    whoPrev = itemW.Who;
+                }
+            }
+        </div>
+    </div>
+}
+
+@if (SelectedUnits != null && SelectedUnits.Any())
+{
+    <div class="row mt-2">
+        <div class="col">
+            <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@SelectedUnits" TItem="UnitDTO"
+                            PagerHorizontalAlign="HorizontalAlign.Center">
+                <Columns>
+                    <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="MilitaryUnit" Title="Military Unit" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="Location" Title="Location" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="WithRemarks" Title="With Remarks" Width="100px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="CommentCount" Title="Comments" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+
+                    <RadzenDataGridColumn Property="Id" Width="70px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            @{
+                                var link = "unit/edit/" + data.Id;
+                            }
+                            <RadzenLink Path=@link Text="Edit" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Id" Width="70px"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                          Click=@(() => DeleteUnit(data.Id)) />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<UnitDTO> units { get; set; } = new List<UnitDTO>();
+    private List<UnitDTO> SelectedUnits { get; set; } = new List<UnitDTO>();
+    private string whoPrev = "zzz";
+    private string selectedWho = "";
+    public bool IsLoading { get; set; }
+    private int DeleteUnitId { get; set; } = 0;
+    public string userEmail = "";
+    public string userRole = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUnits();
+
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var user = authstate.User;
+        userEmail = user.Identity.Name;
+        var appUser = await appUserRepository.GetUserByEmail(userEmail);
+        if (appUser != null)
+        {
+            userRole = appUser.Role;
+        }
+    }
+
+    private async Task LoadUnits()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        var result = await unitRepository.GetUnits();
+        units = result.ToList();
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    async Task DeleteUnit(int Id)
+    {
+        OpenDeleteUnitDialog(Id);
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await unitRepository.Delete(DeleteUnitId);
+            DeleteDialogOpen = false;
+            await LoadUnits();
+            SelectedUnits = units.Where(q => q.Who == selectedWho).ToList();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteUnitDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteUnitId = id;
+        Text = $"Do you want to delete this Military Unit?";
+        StateHasChanged();
+    }
+
+    private void SelectedWho(string who)
+    {
+        selectedWho = who;
+
+        SelectedUnits = units.Where(q => q.Who == who).ToList();
+
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,632 @@
+﻿@page "/trip/{key}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject ITripRepository tripRepository
+@inject IMapper mapper
+
+<div class="viewHeader">
+    <div class="row mt-3 mb-1">
+        <div class="col mb-2 ps-4">
+            <HeadingC Text="Trip" />
+        </div>
+        <div class="col-3 text-center">
+            <button class="btnClose mx-2 mt-1" @onclick="@(e => OnButtonClick("close"))">Close Tab</button>
+            <AuthorizeView>
+                <a href="tripComment/add/@Trip.Id" class="btnAdd mx-2 mt-1">Add Comment</a>
+            </AuthorizeView>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col text-center">
+        <div class="divItem">
+            <h5 class="mt-1">@Trip.YearMon</h5>
+        </div>
+    </div>
+    <div class="col-6 text-center">
+        <div class="divItem">
+            <h5>@Trip.Title</h5>
+        </div>
+    </div>
+    <div class="col text-center">
+        <div class="divItem">
+            <h5 class="mt-1">Owner: @Trip.Owner</h5>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    @if (showMenu && Sections.Any())
+    {
+        <div class="mt-3 ms-3" style="width: 250px;">
+            @foreach (var item in Sections)
+            {
+                var btnCSS = "";
+                if (selectedSectionId == item.Id)
+                {
+                    btnCSS = "selectedSection";
+                }
+                <div class="">
+                    <button type="button" @onclick="() => ShowSection(item.Id)" class="btnB @btnCSS">
+                        @item.Name
+                    </button>
+                </div>
+                @if (item.TripSubSections != null && item.TripSubSections.Any())
+                {
+                    @foreach (var item2 in item.TripSubSections)
+                    {
+                        var btnCSS2 = "";
+                        if (selectedSubSectionId == item2.Id)
+                        {
+                            btnCSS2 = "selectedSubSection";
+                        }
+                        <div class="ms-3">
+                            <button type="button" @onclick="() => ShowSubSection(item2.Id)" class="btnC @btnCSS2">
+                                @item2.Name
+                            </button>
+                        </div>
+                    }
+                }
+            }
+        </div>
+    }
+    <div class="col">
+        <div class="row mt-2">
+            @if (showAlert)
+            {
+                <div class="col-3">
+                    <div class="alert alert-info text-center">
+                        Click on each phase of the trip for the full story
+                    </div>
+                </div>
+            }
+            <div class="col">
+                <div class="text-center">
+                    @foreach (var item in Groups)
+                    {
+                        var btnCSS = "";
+                        if (selectedGroupId == item.Id)
+                        {
+                            btnCSS = "selectedGroup";
+                        }
+                        <button type="button" @onclick="() => ShowGroup(item.Id)" class="btnA @btnCSS">
+                            @item.Name
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="viewDiv">
+            <div class="row mt-2">
+                @if (Photos != null && Photos.Count > 0)
+                {
+                    <div class="col text-center">
+                        @if (photoSize != "small")
+                        {
+                            <button class="btnGroup" onclick="@(() => SetView("small"))">
+                                Small Photos
+                            </button>
+                        }
+                    </div>
+                    <div class="col text-center">
+                        @if (photoSize != "medium")
+                        {
+                            <button class="btnGroup" onclick="@(() => SetView("medium"))">
+                                Medium Photos
+                            </button>
+                        }
+                    </div>
+                    <div class="col text-center">
+                        @if (photoSize != "large")
+                        {
+                            <button class="btnGroup" onclick="@(() => SetView("large"))">
+                                Large Photos
+                            </button>
+                        }
+                    </div>
+                }
+
+                <div class="col text-center">
+                    @if (!hideBody)
+                    {
+                        @if (Comments != null && Comments.Count > 0 && showComments == false)
+                        {
+                            <button type="button" @onclick="() => ShowComments()" class="btnShow">Show Comments</button>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="row mt-2">
+                <div class="col">
+                    @if (Photos.Count > 0)
+                    {
+                        <div class="">
+                            @if (!hideBody)
+                            {
+                                <div class="row">
+                                    @foreach (var item in Photos)
+                                    {
+                                        <div class="@photoColClass mb-2">
+                                            <div class="viewPhotoCard">
+                                                <div>
+                                                    <img src="@item.PhotoUrl" class="img-fluid viewPhoto" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                @if (!hideBody)
+                {
+                    @if (bodyCol1.Length > 0)
+                    {
+                        <div class="col">
+                            <div class="divItem">
+                                @((MarkupString)bodyCol1)
+                            </div>
+                        </div>
+                    }
+                    @if (bodyCol2.Length > 0)
+                    {
+                        <div class="col">
+                            <div class="divItem">
+                                @((MarkupString)bodyCol2)
+                            </div>
+                        </div>
+                    }
+                    @if (bodyCol3.Length > 0)
+                    {
+                        <div class="col">
+                            <div class="divItem">
+                                @((MarkupString)bodyCol3)
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            @if (photoSize == "medium" || photoSize == "large")
+            {
+                <div class="row mt-2">
+                    <ViewPhotosC Photos="@Photos" PhotoSize="@photoSize" />
+                </div>
+            }
+
+            @if (Comments != null && Comments.Count > 0 && showComments)
+            {
+                <ViewCommentsC Comments="Comments" />
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Key { get; set; }
+    private TripDTO Trip { get; set; } = new TripDTO();
+    public List<TripGroupDTO> Groups = new List<TripGroupDTO>();
+    public TripGroupDTO Group = new TripGroupDTO();
+    public List<TripSectionDTO> allSections = new List<TripSectionDTO>();
+    public List<TripSectionDTO> Sections = new List<TripSectionDTO>();
+    public TripSectionDTO Section = new TripSectionDTO();
+    public List<TripSubSectionDTO> allSubSections = new List<TripSubSectionDTO>();
+    public List<TripSubSectionDTO> SubSections = new List<TripSubSectionDTO>();
+    public TripSubSectionDTO SubSection = new TripSubSectionDTO();
+    public List<TripPhotoDTO> allPhotos = new List<TripPhotoDTO>();
+    public List<PhotoDTO> Photos = new List<PhotoDTO>();
+    public List<TripPhotoDTO> TripPhotos = new List<TripPhotoDTO>();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    int TripId = 0;
+    string title { get; set; }
+    bool showComments = false;
+    bool hideBody = false;
+    bool showAlert = true;
+    bool showMenu = false;
+    string photoColClass = "col-4";
+    string photoSize = "small";
+    string bodyCol1 = "";
+    string bodyCol2 = "";
+    string bodyCol3 = "";
+    int selectedGroupId = 0;
+    int selectedSectionId = 0;
+    int selectedSubSectionId = 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var trip = await tripRepository.GetTripByKey(Key);
+        Trip = trip;
+        TripId = Trip.Id;
+
+        var groups = await tripRepository.GetTripGroups();
+        Groups = groups
+            .Where(q => q.TripId == TripId)
+            .OrderBy(q => q.Sort)
+            .ThenBy(q => q.Note)
+            .ToList();
+
+        var photos = await tripRepository.GetTripPhotos(TripId);
+        allPhotos = photos.ToList();
+
+        var sections = await tripRepository.GetTripSections();
+        allSections = sections.ToList();
+
+        var subSections = await tripRepository.GetTripSubSections();
+        allSubSections = subSections.ToList();
+
+        TripPhotos = allPhotos
+            .Where(q => q.TripId == TripId && q.TripGroupId == null)
+            .OrderBy(q => q.Sort)
+            .ThenBy(q => q.Caption)
+            .ToList();
+
+        if (Trip.Comments != null && Trip.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<TripCommentDTO>, List<CommentDTO>>(Trip.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        if (Trip.Note.Length > 10)
+        {
+            bodyCol1 = Trip.Note;
+            string[] cols = bodyCol1.Split("<p>newColumn</p>");
+
+            int colNum = 0;
+            foreach (var aCol in cols)
+            {
+                colNum++;
+                if (colNum == 1)
+                {
+                    bodyCol1 = aCol;
+                    photoColClass = "col-4";
+                }
+                if (colNum == 2)
+                {
+                    bodyCol2 = aCol;
+                    photoColClass = "col-6";
+                }
+                if (colNum == 3)
+                {
+                    bodyCol3 = aCol;
+                    photoColClass = "col-12";
+                }
+            }
+        }
+
+        if (TripPhotos != null)
+        {
+            foreach (var vPhoto in TripPhotos)
+            {
+                var photo = new PhotoDTO
+                    {
+                        Caption = vPhoto.Caption,
+                        OrderBy = vPhoto.Sort,
+                        PhotoUrl = vPhoto.PhotoUrl
+                    };
+
+                Photos.Add(photo);
+            }
+        }
+    }
+
+    private void OnButtonClick(string value)
+    {
+        JS.InvokeVoidAsync($"window.{value}");
+    }
+
+    private void ShowComments()
+    {
+        showComments = true;
+        StateHasChanged();
+    }
+
+    private void ShowGroup(int groupId)
+    {
+        selectedGroupId = groupId;
+
+        var group = Groups
+            .FirstOrDefault(q => q.Id == selectedGroupId);
+        Group = group;
+
+        Sections = allSections
+            .Where(q => q.TripGroupId == selectedGroupId)
+            .OrderBy(q => q.Sort)
+            .ThenBy(q => q.Note)
+            .ToList();
+
+        Photos.Clear();
+
+        var groupPhotos = allPhotos
+            .Where(q => q.TripGroupId == selectedGroupId && q.TripSectionId == null)
+            .OrderBy(q => q.Sort)
+            .ThenBy(q => q.Caption)
+            .ToList();
+
+        bodyCol1 = "";
+        bodyCol2 = "";
+        bodyCol3 = "";
+        if (Group.Note.Length > 10)
+        {
+            bodyCol1 = Group.Note;
+            string[] cols = bodyCol1.Split("<p>newColumn</p>");
+
+            int colNum = 0;
+            foreach (var aCol in cols)
+            {
+                colNum++;
+                if (colNum == 1)
+                {
+                    bodyCol1 = aCol;
+                    photoColClass = "col-4";
+                }
+                if (colNum == 2)
+                {
+                    bodyCol2 = aCol;
+                    photoColClass = "col-6";
+                }
+                if (colNum == 3)
+                {
+                    bodyCol3 = aCol;
+                    photoColClass = "col-12";
+                }
+            }
+        }
+
+        if (groupPhotos != null)
+        {
+            foreach (var vPhoto in groupPhotos)
+            {
+                var photo = new PhotoDTO
+                    {
+                        Caption = vPhoto.Caption,
+                        OrderBy = vPhoto.Sort,
+                        PhotoUrl = vPhoto.PhotoUrl
+                    };
+
+                Photos.Add(photo);
+            }
+        }
+
+        showAlert = false;
+        showMenu = true;
+        hideBody = false;
+        photoSize = "small";
+        showComments = false;
+
+        StateHasChanged();
+    }
+
+    private void ShowSection(int sectionId)
+    {
+        selectedSectionId = sectionId;
+        selectedSubSectionId = 0;
+
+        var section = Sections
+            .FirstOrDefault(q => q.Id == selectedSectionId);
+        Section = section;
+
+        SubSections = allSubSections
+            .Where(q => q.TripSectionId == selectedSectionId)
+            .OrderBy(q => q.Sort)
+            .ThenBy(q => q.Note)
+            .ToList();
+
+        Photos.Clear();
+
+        var sectionPhotos = allPhotos
+            .Where(q => q.TripSectionId == selectedSectionId && q.TripSubSectionId == null)
+            .OrderBy(q => q.Sort)
+            .ThenBy(q => q.Caption)
+            .ToList();
+
+        bodyCol1 = "";
+        bodyCol2 = "";
+        bodyCol3 = "";
+        if (Section.Note.Length > 10)
+        {
+            bodyCol1 = Section.Note;
+            string[] cols = bodyCol1.Split("<p>newColumn</p>");
+
+            int colNum = 0;
+            foreach (var aCol in cols)
+            {
+                colNum++;
+                if (colNum == 1)
+                {
+                    bodyCol1 = aCol;
+                    photoColClass = "col-4";
+                }
+                if (colNum == 2)
+                {
+                    bodyCol2 = aCol;
+                    photoColClass = "col-6";
+                }
+                if (colNum == 3)
+                {
+                    bodyCol3 = aCol;
+                    photoColClass = "col-12";
+                }
+            }
+        }
+
+        if (sectionPhotos != null)
+        {
+            foreach (var vPhoto in sectionPhotos)
+            {
+                var photo = new PhotoDTO
+                    {
+                        Caption = vPhoto.Caption,
+                        OrderBy = vPhoto.Sort,
+                        PhotoUrl = vPhoto.PhotoUrl
+                    };
+
+                Photos.Add(photo);
+            }
+        }
+
+        showAlert = false;
+        showMenu = true;
+        hideBody = false;
+        photoSize = "small";
+        showComments = false;
+
+        StateHasChanged();
+    }
+
+    private void ShowSubSection(int subSectionId)
+    {
+        selectedSubSectionId = subSectionId;
+        selectedSectionId = 0;
+
+        var subSection = allSubSections
+            .FirstOrDefault(q => q.Id == selectedSubSectionId);
+        SubSection = subSection;
+
+        Photos.Clear();
+
+        var subSectionPhotos = allPhotos
+            .Where(q => q.TripSubSectionId == selectedSubSectionId)
+            .OrderBy(q => q.Sort)
+            .ThenBy(q => q.Caption)
+            .ToList();
+
+        bodyCol1 = "";
+        bodyCol2 = "";
+        bodyCol3 = "";
+        if (SubSection.Note != null && SubSection.Note.Length > 10)
+        {
+            bodyCol1 = SubSection.Note;
+            string[] cols = bodyCol1.Split("<p>newColumn</p>");
+
+            int colNum = 0;
+            foreach (var aCol in cols)
+            {
+                colNum++;
+                if (colNum == 1)
+                {
+                    bodyCol1 = aCol;
+                    photoColClass = "col-4";
+                }
+                if (colNum == 2)
+                {
+                    bodyCol2 = aCol;
+                    photoColClass = "col-6";
+                }
+                if (colNum == 3)
+                {
+                    bodyCol3 = aCol;
+                    photoColClass = "col-12";
+                }
+            }
+        }
+
+        if (subSectionPhotos != null)
+        {
+            foreach (var vPhoto in subSectionPhotos)
+            {
+                var photo = new PhotoDTO
+                    {
+                        Caption = vPhoto.Caption,
+                        OrderBy = vPhoto.Sort,
+                        PhotoUrl = vPhoto.PhotoUrl
+                    };
+
+                Photos.Add(photo);
+            }
+        }
+
+        showAlert = false;
+        showMenu = true;
+        hideBody = false;
+        photoSize = "small";
+        showComments = false;
+
+        StateHasChanged();
+    }
+
+    private async Task SetView(string viewStr)
+    {
+        showAlert = false;
+        photoSize = viewStr;
+        showComments = false;
+        if (photoSize == "small")
+        {
+            hideBody = false;
+        }
+        else
+        {
+            hideBody = true;
+        }
+        StateHasChanged();
+    }
+}
+
+<style>
+
+    .btnA {
+        color: white;
+        background-color: #E67E22;
+        border: 2px solid #E67E22;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+        .btnA:hover {
+            color: black;
+            background-color: white;
+            font-size: 1.2rem;
+        }
+
+    .selectedGroup {
+        border: 5px solid lightgray;
+        border-radius: 10px;
+    }
+
+    .btnB {
+        color: white;
+        background-color: dodgerblue;
+        border: 2px solid dodgerblue;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+        .btnB:hover {
+            color: black;
+            background-color: white;
+            font-size: 1.2rem;
+        }
+
+    .selectedSection {
+        border: 5px solid lightgray;
+        border-radius: 10px;
+    }
+
+    .btnC {
+        color: black;
+        background-color: lightgreen;
+        border: 2px solid lightgreen;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+    .btnB:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+    .selectedSubSection {
+        border: 5px solid lightgray;
+        border-radius: 10px;
+    }
+</style>

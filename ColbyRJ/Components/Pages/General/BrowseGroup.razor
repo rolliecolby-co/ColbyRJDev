@@ -1,0 +1,464 @@
+﻿@page "/browseGroup"
+
+@layout BrowseLayout
+
+@inject IBaseRepository baseRepository
+@attribute [Authorize]
+
+<PageTitle>Browse by Group</PageTitle>
+
+<div class="row ">
+    <div class="col-12 mb-2 ">
+        <HeadingC Text="Browse by Group" />
+    </div>
+</div>
+
+@if (tally == null)
+{
+    <div>
+        <h5>Loading ...</h5>
+    </div>
+}
+else
+{
+    <div class="row mb-3">
+        <div class="col text-center">
+            <button class="btnGroup @aActive" onclick="@(() => GetList("all"))">
+                All (@tally.AllCount)
+            </button>
+        </div>
+        <div class="col  text-center">
+            <button class="btnGroup @paActive" onclick="@(() => GetList("photoAlbums"))">
+                Photo Albums (@tally.PhotoAlbumCount)
+            </button>
+        </div>
+        <div class="col  text-center">
+            <button class="btnGroup @pfActive" onclick="@(() => GetList("photoFolders"))">
+                Photo Folders (@tally.PhotoFolderCount)
+            </button>
+        </div>
+        <div class="col  text-center">
+            <button class="btnGroup @sActive" onclick="@(() => GetList("snippets"))">
+                Snippets (@tally.SnippetCount)
+            </button>
+        </div>
+        <div class="col  text-center">
+            <button class="btnGroup @stActive" onclick="@(() => GetList("stories"))">
+                Stories (@tally.StoryCount)
+            </button>
+        </div>
+        <div class="col  text-center">
+            <button class="btnGroup @vActive" onclick="@(() => GetList("videos"))">
+                Videos (@tally.VideoCount)
+            </button>
+        </div>
+    </div>
+}
+
+@if(listedGroup.Length > 0)
+{
+    <div class="row ">
+        <div class="col-12 mb-2 ">
+            <SubHeadingC Text="@listedGroup" />
+        </div>
+    </div>
+}
+
+@if (groupedByElements != null && groupedByElements.Count > 0)
+{
+    prevGroupBy = "zzz";
+    <div class="row mb-2">
+        <div class="col-5">
+            @foreach (var itemGB in groupedByElements)
+            {
+                @if (prevGroupBy != itemGB.GroupBy)
+                {
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <div class="row">
+                                <div class="col py-2 groupByRow d-flex align-items-center">
+                                    @itemGB.GroupBy
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col ">
+                            @foreach (var itemE in groupedByElements)
+                            {
+                                if (itemGB.GroupBy == itemE.GroupBy)
+                                {
+                                    <div class="row ms-2 mb-2 elementRow">
+                                        <div class="col">
+                                            <div class="ms-1 ps-2 py-1  d-flex align-items-center">
+                                                @itemE.Element (@itemE.GBECount)
+                                            </div>
+                                        </div>
+                                        <div class="py-1 d-flex align-items-center text-center" style="width: 100px;">
+                                            <button type="button" class="btnShow"
+                                                    onclick="@(() => ViewGBElement(itemE.GroupBy, itemE.Element))">
+                                                Show
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                    prevGroupBy = itemGB.GroupBy;
+                }
+            }
+        </div>
+        <div class="col">
+            @if (showList)
+            {
+                <div class="mx-3">
+                    @if ((photoAlbums != null && photoAlbums.Any())
+                   || (photoFolders != null && photoFolders.Any())
+                   || (snippets != null && snippets.Any())
+                   || (stories != null && stories.Any())
+                   || (videos != null && videos.Any()))
+                    {
+                        <div class="alertInfo">
+                            <h4>@groupedByTitle: <b>@elementTitle</b></h4>
+                        </div>
+
+                        <div class="mx-3">
+                            <div class="row header-style">
+                                <div class="col-5">
+                                    Title
+                                </div>
+                                <div class="col">
+                                    When
+                                </div>
+                                <div class="col">
+                                    Provider
+                                </div>
+                                <div class="col">
+                                    Updated
+                                </div>
+                                <div style="width: 120px;">
+                                </div>
+                            </div>
+
+                            @foreach (var item in photoAlbums)
+                            {
+                                rowCount++;
+                                rowClass = "rowA";
+                                if (rowCount % 2 == 0)
+                                {
+                                    rowClass = "rowB";
+                                }
+                                <div class="row py-1 d-flex align-items-center  @rowClass">
+                                    <div class="col-5 ">
+                                        @item.Title
+                                    </div>
+                                    <div class="col ">
+                                        @item.YearMonth
+                                    </div>
+                                    <div class="col ">
+                                        @item.Owner
+                                    </div>
+                                    <div class="col ">
+                                        @item.DateUpdated.ToString("M/d/yyyy")
+                                    </div>
+                                    <div class="text-center " style="width: 120px;">
+                                        <a href="photoAlbum/@item.Key" class="btnView" target="_photoAlbum">View</a>
+                                    </div>
+                                </div>
+                            }
+
+                            @foreach (var item in photoFolders)
+                            {
+                                rowCount++;
+                                rowClass = "rowA";
+                                if (rowCount % 2 == 0)
+                                {
+                                    rowClass = "rowB";
+                                }
+                                <div class="row py-1 d-flex align-items-center  @rowClass">
+                                    <div class="col-5 ">
+                                        @item.Title
+                                    </div>
+                                    <div class="col ">
+                                        @item.YearMonth
+                                    </div>
+                                    <div class="col ">
+                                        @item.Owner
+                                    </div>
+                                    <div class="col ">
+                                        @item.DateUpdated.ToString("M/d/yyyy")
+                                    </div>
+                                    <div class="text-center " style="width: 120px;">
+                                        <a href="photoFolder/@item.Key" class="btnView" target="_photoFolder">View</a>
+                                    </div>
+                                </div>
+                            }
+
+                            @foreach (var item in snippets)
+                            {
+                                rowCount++;
+                                rowClass = "rowA";
+                                if (rowCount % 2 == 0)
+                                {
+                                    rowClass = "rowB";
+                                }
+                                <div class="row py-1 d-flex align-items-center  @rowClass">
+                                    <div class="col-5 ">
+                                        @item.Title
+                                    </div>
+                                    <div class="col ">
+                                        @item.YearMonth
+                                    </div>
+                                    <div class="col ">
+                                        @item.Owner
+                                    </div>
+                                    <div class="col ">
+                                        @item.DateUpdated.ToString("M/d/yyyy")
+                                    </div>
+                                    <div class="text-center " style="width: 120px;">
+                                        <a href="snippet/@item.Key" class="btnView" target="_snippet">View</a>
+                                    </div>
+                                </div>
+                            }
+
+                            @foreach (var item in stories)
+                            {
+                                rowCount++;
+                                rowClass = "rowA";
+                                if (rowCount % 2 == 0)
+                                {
+                                    rowClass = "rowB";
+                                }
+                                <div class="row py-1 d-flex align-items-center  @rowClass">
+                                    <div class="col-5 ">
+                                        @item.Title
+                                        @if (item.ChapterCount.Length > 1)
+                                        {
+                                            <br />
+                                            <span class="ps-5">@item.ChapterCount</span>
+                                        }
+                                    </div>
+                                    <div class="col ">
+                                        @item.YearMonth
+                                    </div>
+                                    <div class="col ">
+                                        @item.Owner
+                                    </div>
+                                    <div class="col ">
+                                        @item.DateUpdated.ToString("M/d/yyyy")
+                                    </div>
+                                    <div class="text-center " style="width: 120px;">
+                                        <a href="story/@item.Key" class="btnView" target="_story">View</a>
+                                    </div>
+                                </div>
+                                @if(item.Chapters.Count > 0)
+                                {
+                                    <div class="row">
+                                        <div style="width: 25px;">
+                                        </div>
+                                        <div class="col">
+                                            <div class="row  header-style">
+                                                <div class="col-5">
+                                                    Chapter Title
+                                                </div>
+                                                <div class="col">
+                                                    When
+                                                </div>
+                                                <div class="col">
+                                                    Updated
+                                                </div>
+                                                <div style="width: 120px;">
+                                                </div>
+                                            </div>
+
+                                            @foreach (var itemC in item.Chapters)
+                                            {
+                                            <div class="row">
+                                                <div class="col-5">
+                                                    @itemC.Title
+                                                </div>
+                                                <div class="col">
+                                                    @itemC.ChapterDate
+                                                </div>
+                                                <div class="col">
+                                                    @itemC.DateUpdated
+                                                </div>
+                                                    <div style="width: 120px;">
+                                                        <a href="storyChapter/@itemC.Key" class="btnView" target="_storyChapter">View</a>
+                                                </div>
+                                            </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+
+                            @foreach (var item in videos)
+                            {
+                                rowCount++;
+                                rowClass = "rowA";
+                                if (rowCount % 2 == 0)
+                                {
+                                    rowClass = "rowB";
+                                }
+                                <div class="row py-1 d-flex align-items-center  @rowClass">
+                                    <div class="col-5 ">
+                                        @item.Title
+                                    </div>
+                                    <div class="col ">
+                                        @item.YearMonth
+                                    </div>
+                                    <div class="col ">
+                                        @item.Owner
+                                    </div>
+                                    <div class="col ">
+                                        @item.DateUpdated.ToString("M/d/yyyy")
+                                    </div>
+                                    <div class="text-center " style="width: 120px;">
+                                        <a href="video/@item.Key" class="btnView" target="_video">View</a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+
+@code {
+    private BrowseDTO browsing { get; set; }
+
+    BrowseTally tally = new BrowseTally();
+    private List<GroupByDTO> groupedBy { get; set; }
+    private List<GroupByElementDTO> groupedByElements { get; set; }
+    string prevGroupBy = "zzz";
+    string groupedByTitle = "";
+    string listedGroup = "";
+
+    string elementTitle = "";
+    string rowClass = "";
+    int rowCount = 0;
+    bool showList = false;
+    string aActive = "";
+    string paActive = "";
+    string pfActive = "";
+    string sActive = "";
+    string stActive = "";
+    string vActive = "";
+
+    private List<PhotoAlbumDTO> photoAlbums { get; set; }
+    private List<PhotoFolderDTO> photoFolders { get; set; }
+    private List<SnippetDTO> snippets { get; set; }
+    private List<StoryDTO> stories { get; set; }
+    private List<VideoDTO> videos { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        tally = await baseRepository.GetBrowseTally();
+    }
+
+    private async Task ViewGBElement(string groupedBy, string element)
+    {
+        groupedByTitle = groupedBy;
+        photoAlbums = new List<PhotoAlbumDTO>();
+        photoFolders = new List<PhotoFolderDTO>();
+        snippets = new List<SnippetDTO>();
+        stories = new List<StoryDTO>();
+        videos = new List<VideoDTO>();
+
+        if (element == "Photo Album")
+        {
+            elementTitle = "Photo Albums";
+            var tPhotoAlbums = await baseRepository.GetPhotoAlbums(groupedBy);
+            photoAlbums = tPhotoAlbums.ToList();
+        }
+
+        if (element == "Photo Folder")
+        {
+            elementTitle = "Photo Folders";
+            var tPhotoFolders = await baseRepository.GetPhotoFolders(groupedBy);
+            photoFolders = tPhotoFolders.ToList();
+        }
+
+        if (element == "Snippet")
+        {
+            elementTitle = "Snippets";
+            var tSnippets = await baseRepository.GetSnippets(groupedBy);
+            snippets = tSnippets.ToList();
+        }
+
+        if (element == "Story")
+        {
+            elementTitle = "Stories";
+            var tStories = await baseRepository.GetStories(groupedBy);
+            stories = tStories.ToList();
+        }
+
+        if (element == "Video")
+        {
+            elementTitle = "Videos";
+            var tVideos = await baseRepository.GetVideos(groupedBy);
+            videos = tVideos.ToList();
+        }
+
+        showList = true;
+        StateHasChanged();
+    }
+
+    private async Task GetList(string byWhat)
+    {
+        var tBrowsing = await baseRepository.GetBrowsing(byWhat);
+        browsing = tBrowsing;
+
+        groupedBy = browsing.GroupedBy;
+        groupedByElements = browsing.GroupedByElements;
+
+        ClearActive();
+
+        if (byWhat == "all")
+        {
+            aActive = "btnActive";
+            listedGroup = "All Groups";
+        }
+        if (byWhat == "photoAlbums")
+        {
+            paActive = "btnActive";
+            listedGroup = "Photo Albums";
+        }
+        if (byWhat == "photoFolders")
+        {
+            pfActive = "btnActive";
+            listedGroup = "Photo Folders";
+        }
+        if (byWhat == "snippets")
+        {
+            sActive = "btnActive";
+            listedGroup = "Snippets";
+        }
+        if (byWhat == "stories")
+        {
+            stActive = "btnActive";
+            listedGroup = "Stories";
+        }
+        if (byWhat == "videos")
+        {
+            vActive = "btnActive";
+            listedGroup = "Videos";
+        }
+        showList = false;
+        StateHasChanged();
+    }
+    private void ClearActive()
+    {
+        aActive = "";
+        paActive = "";
+        pfActive = "";
+        sActive = "";
+        stActive = "";
+        vActive = "";
+    }
+}
+

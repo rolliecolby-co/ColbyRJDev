@@ -1,0 +1,139 @@
+﻿@page "/unit/{id:int}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IUnitRepository unitRepository
+@inject IMapper mapper
+@attribute [Authorize]
+
+<div class="viewHeader">
+    <div class="row mt-3 mb-1">
+        <div class="col-9 mb-2 ps-4">
+            <HeadingC Text="Military Unit" />
+        </div>
+        <div class="col text-center">
+            <button class="btnClose mx-2 mt-1" @onclick="@(e => OnButtonClick("close"))">Close Tab</button>
+            <AuthorizeView>
+                <a href="unitComment/add/@Unit.Id" class="btnAdd mx-2 mt-1">Add Comment</a>
+            </AuthorizeView>
+        </div>
+    </div>
+</div>
+
+<div class="viewDiv">
+    <div class="row">
+        <div class="col text-center">
+            <div class="divItem">
+                <h5 class="mt-1">Start: @Unit.YearMonth</h5>
+            </div>
+        </div>
+        <div class="col-6 text-center">
+            <div class="divItem">
+                <h5>@Unit.MilitaryUnit</h5>
+                <h5>@Unit.UnitLocation</h5>
+            </div>
+        </div>
+        <div class="col text-center">
+            <div class="divItem">
+                <h5 class="mt-1">For Whom: @Unit.Who</h5>
+            </div>
+        </div>
+    </div>
+
+    @if (Unit.Remarks.Length > 10)
+    {
+        <div class="row mt-2">
+            @if (bodyCol3.Length == 0)
+            {
+                <div class="col-6">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol1)
+                    </div>
+                </div>
+                @if (bodyCol2.Length > 0)
+                {
+                    <div class="col">
+                        <div class="divItem">
+                            @((MarkupString)bodyCol2)
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol1)
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol2)
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol3)
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+        <ViewCommentsC Comments="Comments" />
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private UnitDTO Unit { get; set; } = new UnitDTO();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string title { get; set; }
+    string bodyCol1 = "";
+    string bodyCol2 = "";
+    string bodyCol3 = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var unit = await unitRepository.GetUnit(Id);
+        Unit = unit;
+        if (Unit.Comments != null && Unit.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<UnitCommentDTO>, List<CommentDTO>>(Unit.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        if (Unit.Remarks.Length > 10)
+        {
+            bodyCol1 = Unit.Remarks;
+            string[] cols = bodyCol1.Split("<p>newColumn</p>");
+
+            int colNum = 0;
+            foreach (var aCol in cols)
+            {
+                colNum++;
+                if (colNum == 1)
+                {
+                    bodyCol1 = aCol;
+                }
+                if (colNum == 2)
+                {
+                    bodyCol2 = aCol;
+                }
+                if (colNum == 3)
+                {
+                    bodyCol3 = aCol;
+                }
+            }
+        }
+    }
+
+    private void OnButtonClick(string value)
+    {
+        JS.InvokeVoidAsync($"window.{value}");
+    }
+}

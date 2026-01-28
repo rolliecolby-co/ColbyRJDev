@@ -1,0 +1,99 @@
+﻿@page "/unit/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IHttpContextAccessor httpContext
+@inject IUnitRepository unitRepository
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col">
+    </div>
+    <div class="col-6">
+        <HeadingC Text="Add Military Unit" />
+
+        <EditForm Model="@unit" OnValidSubmit="AddUnit">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    @*<div class="form-group ">
+                    <label>For Whom</label>
+                    <InputSelect @bind-Value="@unit.Who" class="form-select">
+                    <option value=0 selected>-- Select For Whom --</option>
+                    @foreach (var w in who)
+                    {
+                    <option value="@w.Who">@w.Who</option>
+                    }
+                    </InputSelect>
+                    <ValidationMessage For="() => unit.Who"></ValidationMessage>
+                    </div>*@
+                    <div class="form-group mt-2">
+                        <div class="row mt-2">
+                            <div class="col">
+                                <div class="form-group ">
+                                    <label>Start Year</label>
+                                    <InputNumber @bind-Value="unit.YearInt" class="form-control"></InputNumber>
+                                    <ValidationMessage For="() => unit.YearInt"></ValidationMessage>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <SelectMonStrC vLabel="Start Month" @bind-VMonStr="@unit.MonStr" />
+                            </div>
+                            <div class="col">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Unit</label>
+                        <div>
+                            <InputText @bind-Value="@unit.MilitaryUnit" class="form-control" />
+                            <ValidationMessage For="@(() => unit.MilitaryUnit)" />
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Unit Location</label>
+                        <div>
+                            <InputText @bind-Value="@unit.UnitLocation" class="form-control" />
+                            <ValidationMessage For="@(() => unit.UnitLocation)" />
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Remarks</label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@unit.Remarks" Height="250px" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <button type="submit" class="btnAdd">
+                    Add Unit
+                </button>
+                <a href="units" class="btnReturn ms-3">Return</a>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col">
+    </div>
+</div>
+
+@code {
+    UnitDTO unit = new UnitDTO();
+    List<WhoDTO> who = new List<WhoDTO>();
+    public int unitId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var tWho = await appUserRepository.GetWho("ind");
+        who = tWho.ToList();
+    }
+
+    private async Task AddUnit()
+    {
+        var addResult = await unitRepository.Create(unit);
+        navManager.NavigateTo("units");
+    }
+}

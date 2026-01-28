@@ -1,0 +1,98 @@
+﻿@page "/gallerySections"
+@rendermode InteractiveServer
+
+@layout AdminLayout
+
+@inject IGalleryRepository galleryRepository
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row ">
+    <div class="col mb-2">
+        <HeadingC Text="Gallery Sections" />
+    </div>
+    <div class=" mb-2 text-center" style="width: 220px;">
+        <a href="gallerySection/add" class="btnAdd">Add Gallery Section</a>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-6">
+        <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@sections" TItem="GallerySectionDTO"
+                        PagerHorizontalAlign="HorizontalAlign.Center">
+            <Columns>
+                <RadzenDataGridColumn Property="OrderBy" Title="Order By" Width="200px" TextAlign="TextAlign.Center" 
+                HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Section" Title="Section" HeaderCssClass="rz-background-color-info-lighter" />
+
+                <RadzenDataGridColumn Property="Id" Width="80px" HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        <RadzenButton ButtonStyle="ButtonStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" class="m-1"
+                                      Click=@(() => EditSection(data.Id)) Text="Edit" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="Id" Width="70px" HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                      Click=@(() => DeleteSection(data.Id)) />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+</div>
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<GallerySectionDTO> sections;
+    private int DeleteSectionId { get; set; } = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSections();
+    }
+
+    private async Task LoadSections()
+    {
+        var result = await galleryRepository.GetSections();
+        sections = result.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await galleryRepository.DeleteSection(DeleteSectionId);
+            DeleteDialogOpen = false;
+            await LoadSections();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteSectionDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteSectionId = id;
+        Text = $"Do you want to delete this Gallery Section?";
+        StateHasChanged();
+    }
+
+    async Task DeleteSection(int Id)
+    {
+        OpenDeleteSectionDialog(Id);
+    }
+
+    void EditSection(int Id)
+    {
+        navManager.NavigateTo($"/gallerySection/edit/{Id}");
+    }
+
+}

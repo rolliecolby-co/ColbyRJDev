@@ -1,0 +1,82 @@
+﻿@page "/story/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IStoryRepository storyRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col"></div>
+    <div class="col-6 ">
+        <HeadingC Text="Add Story" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-3">
+    <div class="col"></div>
+    <div class="col-6">
+        <EditForm Model="Story" OnValidSubmit="AddStory">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <InputText @bind-Value="Story.Title" class="form-control"></InputText>
+                        <ValidationMessage For="() => Story.Title"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group ">
+                        <label>Story Year</label>
+                        <InputNumber @bind-Value="Story.YearInt" class="form-control"></InputNumber>
+                        <ValidationMessage For="() => Story.YearInt"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col">
+                    <SelectMonStrC vLabel="Story Month" @bind-VMonStr="@Story.MonStr" />
+                </div>
+                <div class="col">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col text-center">
+                    <div class="form-group pt-3">
+                        <button class="btnAdd">Add Story</button>
+                        <a href="storys" class="btnReturn">Return</a>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="alertInfo">
+                        <p>
+                            When completing the Add Story, a partial completion, you
+                            will be directed to the Update Story page to complete the Story.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    private StoryCreateDTO Story { get; set; } = new StoryCreateDTO();
+    public bool IsLoading { get; set; } = true;
+
+    private async Task AddStory()
+    {
+        var response = await storyRepository.Create(Story);
+        if (response.Substring(0, 2) == "id")
+        {
+            navManager.NavigateTo($"story/edit/{response.Substring(3)}");
+        }
+        //navManager.NavigateTo("storys");
+    }    
+}

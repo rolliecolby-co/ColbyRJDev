@@ -1,0 +1,150 @@
+﻿@page "/categories"
+@rendermode InteractiveServer
+
+@layout AdminLayout
+
+@inject ICategoryRepository categoryRepository
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Categories</PageTitle>
+
+<div class="row ">
+    <div class="col mb-2 ">
+        <HeadingC Text="Categories / Sections / Topics" />
+    </div>
+    <div class="mb-2 mb-2 text-center" style="width: 220px;">
+        <a href="category/add" class="btnAdd">Add New Category</a>
+    </div>
+</div>
+
+<div class="row ms-2 me-2 mt-1">
+    <div class="col-12">
+        @if (categories == null)
+        {
+            <div>
+                <h5>Loading ...</h5>
+            </div>
+        }
+        else
+        {
+            if (categories.Any())
+            {
+                @foreach (var category in categories)
+                {
+                    <div class="row mb-2 ">
+                        <div class="col-3">
+                            <div class="row me-2">
+                                <div class="col py-2 categoryRow d-flex align-items-center">
+                                    @category.Name
+                                </div>
+                                <div class="py-2 categoryRow d-flex align-items-center" style="width: 130px;">
+                                    <a href="@($"category/edit/{category.Id}")" class="btnEdit">Edit</a>
+                                    @if (category.Sections == null || category.Sections.Count == 0)
+                                    {
+                                        <span>&nbsp;</span>
+                                        <button type="button" class="btnDelete ms-2" onclick="@(()=> OpenDeleteCategoryDialog(category.Id))">D</button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            @if (category.Sections.Any())
+                            {
+                                @foreach (var item in category.Sections)
+                                {
+                                    <div class="row mb-2">
+                                        <div class="col-3">
+                                            <div class="row">
+                                                <div class="col-12 py-1 sectionRow">
+                                                    @item.Name
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            @if (item.Topics.Any())
+                                            {
+                                                <div class="row mb-2">
+                                                    @foreach (var topic in item.Topics)
+                                                    {
+                                                        <div class="col-3">
+                                                            <div class="listCard me-2">
+                                                                @topic.Name
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+</div>
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<CategoryDTO> categories;
+
+    public bool IsLoading { get; set; }
+    private int DeleteCategoryId { get; set; } = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        var tCategories = await categoryRepository.GetCategoriesFull();
+        categories = tCategories.ToList();
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await categoryRepository.Delete(DeleteCategoryId);
+            DeleteDialogOpen = false;
+            await LoadCategories();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteCategoryDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteCategoryId = id;
+        Text = "Do you want to delete this Category?";
+        StateHasChanged();
+    }
+}
+
+<style>
+    .categoryRow {
+        background-color: #D8F9DB;
+    }
+
+    .sectionRow {
+        background-color: #FFE4B5;
+    }
+</style>

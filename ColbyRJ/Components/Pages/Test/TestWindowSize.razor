@@ -1,0 +1,60 @@
+﻿@page "/testWindowSize"
+
+@inject BrowserService _service
+
+<h1>Window Dimensions</h1>
+
+<h3>Check if less than 450 width</h3>
+
+<br />
+<p>Current Window <b>Width: @Width</b></p>
+<p>Current Window <b>Height: @Height</b></p>
+
+<p>
+<a href="http://howbigismybrowser.com/" target="_browserSize">Resize my Browser</a>
+</p>
+
+<p>
+    cell width: 384
+    <br />
+    cell height: 693
+</p>
+
+<p>
+    tablet width: 800
+    <br />
+    tablet height: 1198
+</p>
+
+<p>
+    <br />
+    testing LT width: 1475
+    <br />
+    testing LT height: 785
+    <br />
+    <br />
+    Lenovo LT width: 1462
+    <br />
+    Lenovo LT height: 782
+    <br />
+    <br />
+    main LT width: 1523
+    <br />
+    main LT height: 794
+</p>
+
+@code {
+    public int Height { get; set; }
+    public int Width { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var dimension = await _service.GetDimensions();
+            Height = dimension.Height;
+            Width = dimension.Width;
+            StateHasChanged();
+        }
+    }
+}

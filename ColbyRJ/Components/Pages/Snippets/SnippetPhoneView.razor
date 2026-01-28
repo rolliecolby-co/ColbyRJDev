@@ -1,0 +1,107 @@
+﻿@page "/phoneSnippet/{key}"
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject ISnippetRepository snippetRepository
+@inject IMapper mapper
+
+<div class="">
+    <HeadingC Text="Snippet" />
+</div>
+<div class="text-center mt-2 pb-2">
+    <a href="phoneSnippets" class="pBtnReturn">Return</a>
+</div>
+
+<div class="viewDiv">
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">@Snippet.YearMonth</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5>@Snippet.Title</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">Owner: @Snippet.Owner</h5>
+    </div>
+
+    @if (Snippet.AudioUrl.Length > 10)
+    {
+        <div class="mt-2 text-center">
+            <audio class="audioBorder" controls="controls"><source src="@Snippet.AudioUrl" /></audio>
+        </div>
+    }
+
+    <div class="divItem mt-1">
+        @((MarkupString)remarks)
+    </div>
+
+    @if (Snippet.Photos != null && Snippet.Photos.Count > 0)
+    {
+        @foreach (var item in Snippet.Photos)
+        {
+            <div class="mt-2">
+                <div class="viewPhotoCard">
+                    <div>
+                        <img src="@item.PhotoUrl" class="img-fluid viewPhoto" />
+                    </div>
+                    @if (item.Caption.Length > 1)
+                    {
+                        <div class="text-center pt-2">
+                            <h5>@item.Caption</h5>
+                        </div>
+                    }
+                    @if (item.PhotoDateStr.Length > 1)
+                    {
+                        <div class="text-center">
+                            @item.PhotoDateStr
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+        <ViewPhoneCommentsC Comments="Comments" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Key { get; set; }
+    private SnippetDTO Snippet { get; set; } = new SnippetDTO();
+    public List<PhotoDTO> Photos = new List<PhotoDTO>();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string remarks = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var snippet = await snippetRepository.GetSnippetByKey(Key);
+        Snippet = snippet;
+        if (Snippet.Comments != null && Snippet.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<SnippetCommentDTO>, List<CommentDTO>>(Snippet.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        if (Snippet.Photos != null)
+        {
+            foreach (var vPhoto in Snippet.Photos)
+            {
+                var photo = new PhotoDTO
+                    {
+                        Caption = vPhoto.Caption,
+                        OrderBy = vPhoto.OrderBy,
+                        PhotoDate = vPhoto.PhotoDate,
+                        PhotoDateStr = vPhoto.PhotoDateStr,
+                        PhotoUrl = vPhoto.PhotoUrl
+                    };
+
+                Photos.Add(photo);
+            }
+        }
+
+        remarks = Snippet.Body;
+        remarks = remarks.Replace("<p>newColumn</p>", "");
+    }
+}

@@ -1,0 +1,89 @@
+﻿@page "/testSnippets"
+
+@layout PostEditLayout
+
+@inject ISnippetRepository snippetRepository
+
+<div class="row ">
+    <div class="col-8 mb-2 pt-2">
+        <HeadingC Text="Grouped By / Snippets: Title - When - With Audio - Provider - Active" />
+    </div>
+    <div class="col-3 mb-2 offset-1 text-center">
+        <a href="snippet/add" class="btnAdd">Add New Snippet</a>
+    </div>
+</div>
+
+@if (snippets != null && snippets.Any())
+{
+    groupedByPrev = "zzz";
+    <div class="row">
+        <div class="col"></div>
+        <div class="col-10">
+            @foreach (var itemS in snippets)
+            {
+                if (groupedByPrev != itemS.GroupedBy)
+                {
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="sectionHeader">
+                                <b>@itemS.GroupedBy</b>
+                            </div>
+                        </div>
+                    </div>
+                    groupedByPrev = itemS.GroupedBy;
+
+                    foreach (var item in snippets)
+                    {
+                        if (item.GroupedBy == itemS.GroupedBy)
+                        {
+                            <div class="row">
+                                <div class="col">
+                                    @item.Title
+                                </div>
+                                <div class="" style="width: 150px;">
+                                    @item.YearMonth
+                                </div>
+                                <div class="" style="width: 120px;">
+                                    @item.WithAudio
+                                </div>
+                                <div class="" style="width: 150px;">
+                                    @item.Owner
+                                </div>
+                                <div class="" style="width: 100px;">
+                                    @item.ActiveStr
+                                </div>
+                                <div class="" style="width: 130px;">
+                                    @item.PhotoCount
+                                </div>
+                                <div class="" style="width: 140px;">
+                                    @item.CommentCount
+                                </div>
+                                <div class="py-1" style="width: 140px;">
+                                    <a href="@($"testSnippetEdit")" class="btnEdit">Edit</a>
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+            }
+        </div>
+        <div class="col"></div>
+    </div>
+}
+
+@code {
+    private List<SnippetDTO> snippets { get; set; } = new List<SnippetDTO>();
+    private int DeleteSnippetId { get; set; } = 0;
+    private string groupedByPrev = "zzz";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSnippets();
+    }
+
+    private async Task LoadSnippets()
+    {
+        var tSnippets = await snippetRepository.GetSnippets();
+        snippets = tSnippets.ToList();
+    }
+}

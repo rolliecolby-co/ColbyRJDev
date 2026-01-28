@@ -1,0 +1,209 @@
+﻿@page "/browseTrips"
+@rendermode InteractiveServer
+
+@layout BrowseLayout
+
+@inject ITripRepository tripRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2 ">
+        <HeadingC Text="Trips" />
+    </div>
+    <div class="col mb-2 ">
+        @if (groupedBy != null && groupedBy.Count > 0)
+        {
+            <select value="@selectedGroupBy" class="form-select" @onchange="OnGroupByChanged">
+                <option value="">-- Filter By Grouping --</option>
+                @foreach (var item in groupedBy)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        }
+    </div>
+    <div class="col mb-2 ">
+        @if (decades != null && decades.Count > 0)
+        {
+            <select value="@selectedDecade" class="form-select" @onchange="OnDecadeChanged">
+                <option value="">-- Filter By Decade --</option>
+                @foreach (var item in decades)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        }
+    </div>
+</div>
+
+@if (showList)
+{
+    <div class="row mt-2">
+        <div class="col">
+            @foreach (var trip in Trips)
+            {
+                <div class="m-2" style="float: left;">
+                    <a href="trip/@trip.Key" class="btnList" target="_trip">@trip.Title</a>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (trips != null && trips.Count > 0)
+{
+    <div class="row mt-3 ">
+        <div class="col">
+            <table class="">
+                <tr>
+                    <th class="pe-3">When</th>
+                    <th class="pe-3">Title</th>
+                    <th class="pe-3">Note</th>
+                    <th class="pe-3">Owner</th>
+                    <th class="pe-3"></th>
+                </tr>
+                @if (trips.Any())
+                {
+                    foreach (var item in trips)
+                    {
+                        <tr>
+                            <td class="pe-3">
+                                @item.YearMon
+                            </td>
+                            <td class="pe-3">
+                                @item.Title
+                            </td>
+                            <td class="pe-3">
+                                <div class="" style="width: 500px;">
+                                    @if (item.Note.Length > 10)
+                                    {
+                                        <CollapsableDetailsC Title="Note" Collapsed="true">
+                                            @((MarkupString)@item.Note)
+                                        </CollapsableDetailsC>
+                                    }
+                                </div>
+                            </td>
+                            <td class="pe-3">
+                                <div>
+                                    @item.Owner
+                                </div>
+                            </td>
+                            <td class="pe-1 pt-1">
+                                <div>
+                                    <a href="trip/@item.Key" class="btnView" target="_trip">View</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    List<TripDTO> allTrips;
+    List<TripDTO> trips;
+    List<TripDTO> Trips = new List<TripDTO>();
+    private List<string> groupedBy;
+    private List<string> decades;
+    bool showList = true;
+    string selectedGroupBy = "";
+    string selectedDecade = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTrips();
+
+        Trips = allTrips.OrderBy(o => o.Title).ToList();
+
+        groupedBy = allTrips.OrderBy(q => q.GroupedBy).Select(q => q.GroupedBy).ToList();
+        groupedBy = groupedBy.AsQueryable().Distinct().ToList();
+
+        decades = allTrips.OrderBy(q => q.Decade).Select(q => q.Decade).ToList();
+        decades = decades.AsQueryable().Distinct().ToList();
+    }
+
+    private async Task LoadTrips()
+    {
+        var result = await tripRepository.GetActiveTrips();
+        allTrips = result.ToList();
+    }
+
+    // void CustomViewHandler(GridCommandEventArgs args)
+    // {
+    //     navManager.NavigateTo($"/trip/{(args.Item as TripDTO).Key}");
+    // }
+
+    private void OnGroupByChanged(ChangeEventArgs e)
+    {
+        showList = false;
+        selectedDecade = "";
+        selectedGroupBy = e.Value.ToString();
+        trips = allTrips.Where(q => q.GroupedBy == selectedGroupBy).ToList();
+        StateHasChanged();
+    }
+
+    private void OnDecadeChanged(ChangeEventArgs e)
+    {
+        showList = false;
+        selectedGroupBy = "";
+        selectedDecade = e.Value.ToString();
+        trips = allTrips.Where(q => q.Decade == selectedDecade).ToList();
+        StateHasChanged();
+    }
+}
+
+<style>
+
+    .btnDecade {
+        color: white;
+        background-color: #E67E22;
+        border: 2px solid #E67E22;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+        .btnDecade:hover {
+            color: black;
+            background-color: white;
+            font-size: 1.2rem;
+        }
+
+    .selectedDecade {
+        border: 5px solid lightgray;
+        border-radius: 10px;
+    }
+
+    .btnSection {
+        color: white;
+        background-color: dodgerblue;
+        border: 2px solid dodgerblue;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+        .btnSection:hover {
+            color: black;
+            background-color: white;
+            font-size: 1.2rem;
+        }
+
+    .btnSize {
+        color: black;
+        background-color: #D5D8DC;
+        border: 2px solid #D5D8DC;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px 10px;
+    }
+
+    .selectedSection {
+        border: 5px solid lightgray;
+        border-radius: 10px;
+    }
+</style>

@@ -1,0 +1,65 @@
+﻿@page "/tripComment/add/{TripId:int}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject ITripRepository tripRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-6">
+        <HeadingC Text="Add Snippet Comment" />
+
+        <div class="row mt-2">
+            <div class="col-4 pt-2 text-center">
+                Grouped By / Snippet
+            </div>
+            <div class="col">
+                <SubHeadingC Text="@Trip.Title" />
+            </div>
+        </div>
+
+        <EditForm Model="Comment" OnValidSubmit="AddComment">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group">
+                        <label><b>Your Comment</b></label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@Comment.Comments" Height="500px" />
+                        <ValidationMessage For="@(() => Comment.Comments)" />
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="form-group text-center mt-5">
+                        <button class="btnAdd">Add Comment</button>
+                        <br /><br />
+                        <a href="trip/@TripId" class="btnReturn">Return</a>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    [Parameter] public int TripId { get; set; }
+    private TripDTO Trip { get; set; } = new TripDTO();
+    private TripCommentDTO Comment { get; set; } = new TripCommentDTO();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var trip = await tripRepository.GetTrip(TripId);
+        Trip = trip;
+        Comment.TripId = TripId;
+    }
+
+    private async Task AddComment()
+    {
+        var newCommentResult = await tripRepository.CreateComment(Comment);
+        navManager.NavigateTo($"trip/{@TripId}");
+    }
+}

@@ -1,0 +1,53 @@
+﻿@page "/addressesUnits"
+
+@layout BrowseLayout
+
+@inject IAddressRepository addressRepository
+@inject IUnitRepository unitRepository
+@attribute [Authorize]
+
+<PageTitle>Addresses & Units</PageTitle>
+
+
+<div class="row ">
+    <div class="col-12 mb-2 ">
+        <HeadingC Text="Addresses & Units" />
+    </div>
+</div>
+
+<div class="row">
+    <div class="" style="width: 200px">
+        <div class="text-center mt-2">
+            <button class="btnShow" onclick="@(() => ShowAddresses)">Home Addresses</button>
+        </div>
+        <div class="text-center mt-2">
+            <button class="btnShow" onclick="@(() => ShowUnits)">Army Units</button>
+        </div>
+    </div>
+    <div class="col">
+    </div>
+</div>
+
+@code {
+    private List<AddressDTO> addresses { get; set; } = new List<AddressDTO>();
+    private List<UnitDTO> units { get; set; } = new List<UnitDTO>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var addrs = await addressRepository.GetAddresses();
+        addresses = addrs.ToList();
+
+        var uns = await unitRepository.GetUnits();
+        units = uns.ToList();
+    }
+
+    private void ShowAddresses()
+    {
+        StateHasChanged();
+    }
+
+    private void ShowUnits()
+    {
+        StateHasChanged();
+    }
+}

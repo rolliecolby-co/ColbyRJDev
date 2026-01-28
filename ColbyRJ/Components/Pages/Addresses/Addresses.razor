@@ -1,0 +1,172 @@
+﻿@page "/addresses"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IAddressRepository addressRepository
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2 ">
+        <HeadingC Text="Home Address History" />
+    </div>
+    <div class=" mb-2 text-center" style="width: 220px;">
+        <a href="address/add" class="btnAdd">Add New Address</a>
+    </div>
+</div>
+
+@if (addresses != null && addresses.Any())
+{
+    whoPrev = "zzz";
+    <div class="row mt-1">
+        <div class="col">
+            <div class="sectionHeader">
+                Select For Whom
+            </div>
+        </div>
+        <div class="col-md-10">
+            @foreach (var itemW in addresses)
+            {
+                if (whoPrev != itemW.Who)
+                {
+                    var btnCSS = "";
+                    if (selectedWho == itemW.Who)
+                    {
+                        btnCSS = "selectedWho";
+                    }
+                    <span class="ms-3 mb-2">
+                        <button class="btnWho @btnCSS"
+                    onclick="@(() => SelectedWho(itemW.Who))">
+                            @itemW.Who
+                        </button>
+                    </span>
+                    whoPrev = itemW.Who;
+                }
+            }
+        </div>
+    </div>
+}
+
+@if (SelectedAddresses != null && SelectedAddresses.Any())
+{
+    <div class="row ">
+        <div class="col mt-2">
+            <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@SelectedAddresses" TItem="AddressDTO"
+                            PagerHorizontalAlign="HorizontalAlign.Center">
+                <Columns>
+                    <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="HomeAddress" Title="Home Address" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="WithRemarks" Title="With Remarks" Width="100px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="CommentCount" Title="Comments" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="PhotoCount" Title="Photos" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+
+                    <RadzenDataGridColumn Property="Id" Width="70px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            @{
+                                var link = "address/edit/" + data.Id;
+                            }
+                            <RadzenLink Path=@link Text="Edit" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Id" Width="70px" HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                          Click=@(() => DeleteAddress(data.Id)) />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<AddressDTO> addresses { get; set; } = new List<AddressDTO>();
+    private List<AddressDTO> SelectedAddresses { get; set; } = new List<AddressDTO>();
+    private string whoPrev = "zzz";
+    private string selectedWho = "";
+    public bool IsLoading { get; set; }
+    private int DeleteAddressId { get; set; } = 0;
+    public string userEmail = "";
+    public string userRole = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAddresses();
+
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var user = authstate.User;
+        userEmail = user.Identity.Name;
+        var appUser = await appUserRepository.GetUserByEmail(userEmail);
+        if (appUser != null)
+        {
+            userRole = appUser.Role;
+        }
+    }
+
+    private async Task LoadAddresses()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        var result = await addressRepository.GetAddresses();
+        addresses = result.ToList();
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    async Task DeleteAddress(int Id)
+    {
+        OpenDeleteAddressDialog(Id);
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await addressRepository.Delete(DeleteAddressId);
+            DeleteDialogOpen = false;
+            await LoadAddresses();
+            SelectedAddresses = addresses.Where(q => q.Who == selectedWho).ToList();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteAddressDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteAddressId = id;
+        Text = $"Do you want to delete this Address?";
+        StateHasChanged();
+    }
+
+    private void SelectedWho(string who)
+    {
+        selectedWho = who;
+
+        SelectedAddresses = addresses.Where(q => q.Who == who).ToList();
+
+        StateHasChanged();
+    }
+
+}
+
+

@@ -1,0 +1,67 @@
+﻿@page "/storyComment/add/{StoryId:int}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IStoryRepository storyRepository
+@inject IStoryCommentRepository storyCommentRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-6">
+        <HeadingC Text="Add Story Comment" />
+
+        <div class="row mt-2">
+            <div class="col-4 pt-2 text-center">
+                Grouped By / Story
+            </div>
+            <div class="col">
+                <SubHeadingC Text="@storyStr" />
+            </div>
+        </div>
+
+        <EditForm Model="Comment" OnValidSubmit="AddComment">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group">
+                        <label><b>Your Comment</b></label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@Comment.Comments" Height="500px" />
+                        <ValidationMessage For="@(() => Comment.Comments)" />
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="form-group text-center mt-5">
+                        <button class="btnAdd">Add Comment</button>
+                        <br /><br />
+                        <a href="story/@Story,Key" class="btnReturn">Return</a>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+@code {
+    [Parameter] public int StoryId { get; set; }
+    private StoryDTO Story { get; set; } = new StoryDTO();
+    private StoryCommentDTO Comment { get; set; } = new StoryCommentDTO();
+    string storyStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var story = await storyRepository.GetStory(StoryId);
+        Story = story;
+        storyStr = Story.GroupedBy + " / " + Story.Title;
+        Comment.StoryId = StoryId;
+    }
+
+    private async Task AddComment()
+    {
+        var newCommentResult = await storyCommentRepository.Create(Comment);
+        navManager.NavigateTo($"story/{@Story.Key}");
+    }
+}

@@ -1,0 +1,30 @@
+﻿
+<div class="form-group">
+    <label>@FieldName</label>
+    <div class="">
+        <input class="form-control"
+               type="number"
+               value="@Value" @oninput="OnValueChanged" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Value { get; set; }
+
+    [Parameter]
+    public string FieldName { get; set; }
+
+    [Parameter]
+    public EventCallback<int> ValueChanged { get; set; }
+
+    protected override void OnInitialized()
+    {
+    }
+
+    private Task OnValueChanged(ChangeEventArgs e)
+    {
+        Value = Convert.ToInt32(e.Value);
+        return ValueChanged.InvokeAsync(Value);
+    }  
+}

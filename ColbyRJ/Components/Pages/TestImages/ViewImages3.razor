@@ -1,0 +1,73 @@
+﻿@page "/viewImages3"
+
+@layout ViewLayout
+
+@using System.IO;
+
+<div class="row mt-5">
+    <div class="col">
+    </div>
+    <div class="col-10">
+        <h3>View Images 3</h3>
+
+        <div class="row">
+            <h2>photoDirs/images Folder</h2>
+            <hr />
+            @if (filesList != null && filesList.Count > 0)
+            {
+                @foreach (string file in filesList)
+                {
+                    var imagePath = rootFolder + pathFolder + "/" + file;
+
+                    <div class="col-md-2 mb-3">
+                        <div class="text-center divImage">
+                            <img src="@imagePath" asp-append-version="true" class="img-fluid" />
+                        </div>
+                        <div class="text-center divFilename">
+                            <span>@file</span>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+    <div class="col">
+    </div>
+</div>
+
+@code {
+    string img = "";
+    string imgName = "N/A";
+    List<string> filesList = new List<string>();
+    string rootPath = $"{Directory.GetCurrentDirectory()}{@"\wwwroot\photoDirs\"}";
+    string rootFolder = "/photoDirs/";
+    string pathFolder = "group1/images";
+
+    protected override async Task OnInitializedAsync()
+    {
+        LoadImages();
+    }
+
+    public void LoadImages()
+    {
+        var pathDir = pathFolder.Replace("/", "\\");
+        var path = rootPath + pathDir;
+        var files = Directory.GetFiles(path);
+        foreach (var file in files)
+        {
+            filesList.Add(Path.GetFileName(file));
+        }
+    }
+}
+
+<style>
+    divFilename {
+        padding: 10px 15px;
+    }
+
+    divImage {
+        margin: 10px 15px;
+        border: 1px solid red;
+        border-radius: 10px;
+    }
+</style>

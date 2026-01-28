@@ -1,0 +1,159 @@
+﻿@page "/browseOther"
+
+@layout BrowseLayout
+
+@inject IBaseRepository baseRepository
+@inject IAddressRepository addressRepository
+@inject IJobRepository jobRepository
+@inject IUnitRepository unitRepository
+@inject IWhoAmIRepository whoAmIRepository
+@inject IWhoAmICommentRepository commentRepository
+@attribute [Authorize]
+
+<PageTitle>Browse Other</PageTitle>
+
+<div class="row ">
+    <div class="col-12 mb-2">
+        <HeadingC Text="Browse Other" />
+    </div>
+</div>
+
+@if (tally == null)
+{
+        <div>
+            <h5>Loading ...</h5>
+        </div>
+}
+else
+{
+        <div class="row mb-3">
+            <div class="col text-center mb-2">
+                <button class="btnGroup" onclick="@(() => GetWhoAmI())">
+                    Who Am I (@tally.WhoAmICount)
+                </button>
+            </div>
+            <div class="col  text-center mb-2">
+                <button class="btnGroup" onclick="@(() => GetAddresses())">
+                    Home Addresses (@tally.AddressCount)
+                </button>
+            </div>
+            <div class="col  text-center mb-2">
+                <button class="btnGroup" onclick="@(() => GetJobs())">
+                    Jobs (@tally.JobCount)
+                </button>
+            </div>
+            <div class="col  text-center">
+                <button class="btnGroup" onclick="@(() => GetUnits())">
+                    Military Units (@tally.UnitCount)
+                </button>
+            </div>
+        </div>
+}
+
+@if (showWhoAmIs)
+{
+    <ViewWhoAmIsC WhoAmIs="@whoAmIs" Comments="@comments"  />
+}
+else if (showAddresses)
+{
+    <ViewAddressesC Addresses="@addresses"  />
+}
+else if (showUnits)
+{
+    <ViewUnitsC Units="@units" />
+}
+else if (showJobs)
+{
+    <ViewJobsC Jobs="@jobs" />
+}
+
+@code {
+    BrowseTally tally = new BrowseTally();
+    private List<AddressDTO> addresses { get; set; } = new List<AddressDTO>();
+    private List<JobDTO> jobs { get; set; } = new List<JobDTO>();
+    private List<UnitDTO> units { get; set; } = new List<UnitDTO>();
+    private List<WhoAmIDTO> whoAmIs { get; set; } = new List<WhoAmIDTO>();
+    private List<WhoAmICommentDTO> comments { get; set; } = new List<WhoAmICommentDTO>();
+
+    bool showWhoAmIs { get; set; } = false;
+    bool showAddresses { get; set; } = false;
+    bool showJobs { get; set; } = false;
+    bool showUnits { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        tally = await baseRepository.GetBrowseTally();
+    }
+
+    private async Task GetWhoAmI()
+    {
+        showWhoAmIs = false;
+        showAddresses = false;
+        showJobs = false;
+        showUnits = false;
+
+        var tWhoAmIs = await whoAmIRepository.GetAllWhoAmIs();
+        whoAmIs = tWhoAmIs.ToList();
+
+        if (whoAmIs.Count > 0)
+        {
+            showWhoAmIs = true;
+
+            var tComments = await commentRepository.GetAllComments();
+            comments = tComments.ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task GetAddresses()
+    {
+        showWhoAmIs = false;
+        showAddresses = false;
+        showJobs = false;
+        showUnits = false;
+
+        var tAddresses = await addressRepository.GetAddresses();
+        addresses = tAddresses.ToList();
+
+        showAddresses = true;
+
+        StateHasChanged();
+    }
+
+    private async Task GetJobs()
+    {
+        showWhoAmIs = false;
+        showAddresses = false;
+        showJobs = false;
+        showUnits = false;
+
+        var tJobs = await jobRepository.GetJobs();
+        jobs = tJobs.ToList();
+
+        showJobs = true;
+
+        StateHasChanged();
+    }
+
+    private async Task GetUnits()
+    {
+        showWhoAmIs = false;
+        showAddresses = false;
+        showJobs = false;
+        showUnits = false;
+
+        var tUnits = await unitRepository.GetUnits();
+        units = tUnits.ToList();
+
+        showUnits = true;
+
+        StateHasChanged();
+    }
+
+    private async Task GetList(string byWhat)
+    {
+        var tBrowsing = await baseRepository.GetBrowsing(byWhat);
+        StateHasChanged();
+    }
+}

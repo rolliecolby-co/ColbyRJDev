@@ -1,0 +1,67 @@
+﻿@page "/docComment/add/{DocId:int}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IDocRepository docRepository
+@inject IDocCommentRepository docCommentRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-6">
+        <HeadingC Text="Add Document Comment" />
+
+        <div class="row mt-2">
+            <div class="col-4 pt-2 text-center">
+                Grouped By / Doc
+            </div>
+            <div class="col">
+                <SubHeadingC Text="@docStr" />
+            </div>
+        </div>
+
+        <EditForm Model="Comment" OnValidSubmit="AddComment">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group">
+                        <label><b>Your Comment</b></label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@Comment.Comments" Height="500px" />
+                        <ValidationMessage For="@(() => Comment.Comments)" />
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="form-group text-center mt-5">
+                        <button class="btnAdd">Add Comment</button>
+                        <br /><br />
+                        <a href="doc/@Doc.Key" class="btnReturn">Return</a>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+@code {
+    [Parameter] public int DocId { get; set; }
+    private DocDTO Doc { get; set; } = new DocDTO();
+    private DocCommentDTO Comment { get; set; } = new DocCommentDTO();
+    string docStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var doc = await docRepository.GetDoc(DocId);
+        Doc = doc;
+        docStr = Doc.GroupedBy + " / " + Doc.Title;
+        Comment.DocId = DocId;
+    }
+
+    private async Task AddComment()
+    {
+        var newCommentResult = await docCommentRepository.Create(Comment);
+        navManager.NavigateTo($"doc/{@Doc.Key}");
+    }
+}

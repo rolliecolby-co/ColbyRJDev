@@ -1,0 +1,108 @@
+﻿@page "/addressComments/{addressId:int}"
+
+@layout PostEditLayout
+
+
+@inject IAddressRepository addressRepository
+@inject IAddressCommentRepository addressCommentRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Address Comments: Home Address - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="address/edit/@AddressId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (addressComments != null && addressComments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-4 pt-2 text-center">
+            Home Address
+        </div>
+        <div class="col-6">
+            <SubHeadingC Text="@addressStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in addressComments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteAddressCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int AddressId { get; set; }
+    private AddressDTO Address { get; set; } = new AddressDTO();
+    private List<AddressCommentDTO> addressComments { get; set; } = new List<AddressCommentDTO>();
+    private int DeleteAddressCommentId { get; set; } = 0;
+    string addressStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var address = await addressRepository.GetAddress(AddressId);
+        Address = address;
+        addressStr = Address.HomeAddress;
+
+        await LoadAddressComments();
+    }
+
+    private async Task LoadAddressComments()
+    {
+        var vAddressComments = await addressCommentRepository.GetComments(AddressId);
+        addressComments = vAddressComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await addressCommentRepository.Delete(DeleteAddressCommentId);
+            DeleteDialogOpen = false;
+            await LoadAddressComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteAddressCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteAddressCommentId = id;
+        Text = "Do you want to delete this Address Comment?";
+        StateHasChanged();
+    }
+
+}

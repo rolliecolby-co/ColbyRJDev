@@ -1,0 +1,68 @@
+﻿@page "/photoFolderComment/add/{PhotoFolderId:int}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IPhotoFolderRepository photoFolderRepository
+@inject IPhotoFolderCommentRepository photoFolderCommentRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-6">
+        <HeadingC Text="Add Photo Album Comment" />
+
+        <div class="row mt-2">
+            <div class="col-4 pt-2 text-center">
+                Grouped By / Photo Folder
+            </div>
+            <div class="col">
+                <SubHeadingC Text="@photoFolderStr" />
+            </div>
+        </div>
+
+        <EditForm Model="Comment" OnValidSubmit="AddComment">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group">
+                        <label><b>Your Comment</b></label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@Comment.Comments" Height="500px" />
+                        <ValidationMessage For="@(() => Comment.Comments)" />
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="form-group text-center mt-5">
+                        <button class="btnAdd">Add Comment</button>
+                        <br /><br />
+                        <a href="photoFolder/@PhotoFolder.Key" class="btnReturn">Return</a>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+@code {
+    [Parameter] public int PhotoFolderId { get; set; }
+    private PhotoFolderDTO PhotoFolder { get; set; } = new PhotoFolderDTO();
+    private PhotoFolderCommentDTO Comment { get; set; } = new PhotoFolderCommentDTO();
+    string photoFolderStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var photoFolder = await photoFolderRepository.GetPhotoFolder(PhotoFolderId);
+        PhotoFolder = photoFolder;
+        photoFolderStr = PhotoFolder.GroupedBy + " / " + PhotoFolder.Title;
+        Comment.PhotoFolderId = PhotoFolderId;
+    }
+
+    private async Task AddComment()
+    {
+        var newCommentResult = await photoFolderCommentRepository.Create(Comment);
+        navManager.NavigateTo($"photoFolder/{@PhotoFolder.Key}");
+    }
+}
+

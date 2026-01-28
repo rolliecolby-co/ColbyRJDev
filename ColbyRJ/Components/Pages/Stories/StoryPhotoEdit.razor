@@ -1,0 +1,78 @@
+﻿@page "/storyPhoto/edit/{PhotoId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IStoryPhotoRepository storyPhotoRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-8">
+        <HeadingC Text="Edit Story Photo" />
+
+        @if (Photo != null && Photo.Story != null)
+        {
+            <div class="row mt-2">
+                <div class="col-4 pt-2 text-center">
+                    Grouped By / Story
+                </div>
+                <div class="col">
+                    <SubHeadingC Text="@storyStr" />
+                </div>
+            </div>
+        }
+
+        <EditForm Model="Photo" OnValidSubmit="UpdatePhoto">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col-5">
+                    <div class="form-group">
+                        <label><b>Caption</b></label>
+                        <InputText @bind-Value="Photo.Caption" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Order Number</label>
+                        <InputNumber @bind-Value="Photo.OrderBy" class="form-control"></InputNumber>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Photo Date</label>
+                        <InputDate @bind-Value="Photo.PhotoDate" class="form-control"></InputDate>
+                    </div>
+                    <div class="form-group text-center mt-3">
+                        <button class="btnSave">Save</button>
+                        <a href="storyPhotos/@Photo.StoryId" class="btnReturn">Return</a>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="photo-edit">
+                        <img src="@Photo.PhotoUrl" class="img-fluid" />
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    [Parameter] public int PhotoId { get; set; }
+    private StoryPhotoDTO Photo { get; set; } = new StoryPhotoDTO();
+    string storyStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var photo = await storyPhotoRepository.GetPhoto(PhotoId);
+        Photo = photo;
+        storyStr = Photo.Story.GroupedBy + " / " + Photo.Story.Title;
+        StateHasChanged();
+    }
+
+    private async Task UpdatePhoto()
+    {
+        var updatePhotoResult = await storyPhotoRepository.Update(Photo);
+        navManager.NavigateTo($"storyPhotos/{@Photo.Story.Id}");
+    }
+}

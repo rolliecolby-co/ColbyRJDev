@@ -1,0 +1,365 @@
+﻿@page "/browseDecade"
+
+@layout BrowseLayout
+
+@inject IBaseRepository baseRepository
+@attribute [Authorize]
+
+<PageTitle>Browse by Year</PageTitle>
+
+<div class="row ">
+    <div class="col-12 mb-2">
+        <HeadingC Text="Browse by Decade" />
+    </div>
+</div>
+
+@if (tally == null)
+{
+    <div>
+        <h5>Loading ...</h5>
+    </div>
+}
+else
+{
+    <div class="row mb-3">
+        <div class="col text-center">
+            <button class="btnGroup" onclick="@(() => GetList("all"))">
+                All (@tally.AllCount)
+            </button>
+        </div>
+        <div class="col  text-center">
+            <button class="btnGroup" onclick="@(() => GetList("photoAlbums"))">
+                Photo Albums (@tally.PhotoAlbumCount)
+            </button>
+        </div>
+        <div class="col  text-center">
+            <button class="btnGroup" onclick="@(() => GetList("photoFolders"))">
+                Photo Folders (@tally.PhotoFolderCount)
+            </button>
+        </div>
+        <div class="col  text-center">
+            <button class="btnGroup" onclick="@(() => GetList("snippets"))">
+                Snippets (@tally.SnippetCount)
+            </button>
+        </div>
+        <div class="col  text-center">
+            <button class="btnGroup" onclick="@(() => GetList("stories"))">
+                Stories (@tally.StoryCount)
+            </button>
+        </div>
+        <div class="col  text-center">
+            <button class="btnGroup" onclick="@(() => GetList("videos"))">
+                Videos (@tally.VideoCount)
+            </button>
+        </div>
+    </div>
+}
+
+@if (decadeElements != null && decadeElements.Count > 0)
+{
+    prevDecade = "9999";
+    <div class="row mb-2">
+        <div class="col-5">
+            @foreach (var itemD in decadeElements)
+            {
+                @if (prevDecade != itemD.Decade)
+                {
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <div class="row">
+                                <div class="col py-2 yearRow d-flex align-items-center">
+                                    @itemD.Decade
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col ">
+                            @foreach (var itemE in decadeElements)
+                            {
+                                if (itemD.Decade == itemE.Decade)
+                                {
+                                    <div class="row ms-2 mb-2 elementRow">
+                                        <div class="col">
+                                            <div class="ms-1 ps-2 py-1  d-flex align-items-center">
+                                                @itemE.Element (@itemE.DECount)
+                                            </div>
+                                        </div>
+                                        <div class="py-1 d-flex align-items-center text-center" style="width: 100px;">
+                                            <button type="button" class="btnShow"
+                                onclick="@(() => ViewDElement(itemE.Decade, itemE.Element))">
+                                                Show
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                    prevDecade = itemD.Decade;
+                }
+            }
+        </div>
+        <div class="col">
+            @if (showList)
+            {
+                <div class="mx-3">
+                    @if ((photoAlbums != null && photoAlbums.Any())
+                   || (photoFolders != null && photoFolders.Any())
+                   || (snippets != null && snippets.Any())
+                   || (stories != null && stories.Any())
+                   || (videos != null && videos.Any()))
+                    {
+                        <div class="alertInfo">
+                            <h4>@decadeTitle: <b>@elementTitle</b></h4>
+                        </div>
+
+                        <div class="mx-3">
+                            <div class="row header-style">
+                                <div class="col-5">
+                                    Title
+                                </div>
+                                <div class="col">
+                                    When
+                                </div>
+                                <div class="col">
+                                    Provider
+                                </div>
+                                <div class="col">
+                                    Updated
+                                </div>
+                                <div style="width: 120px;">
+                                </div>
+                            </div>
+
+                            @foreach (var item in photoAlbums)
+                            {
+                                rowCount++;
+                                rowClass = "rowA";
+                                if (rowCount % 2 == 0)
+                                {
+                                    rowClass = "rowB";
+                                }
+                                <div class="row py-1 d-flex align-items-center  @rowClass">
+                                    <div class="col-5 ">
+                                        @item.Title
+                                    </div>
+                                    <div class="col ">
+                                        @item.YearMonth
+                                    </div>
+                                    <div class="col ">
+                                        @item.Owner
+                                    </div>
+                                    <div class="col ">
+                                        @item.DateUpdated.ToString("M/d/yyyy")
+                                    </div>
+                                    <div class="text-center " style="width: 120px;">
+                                        <a href="photoAlbum/@item.Id" class="btnView" target="_photoAlbum">View</a>
+                                    </div>
+                                </div>
+                            }
+
+                            @foreach (var item in photoFolders)
+                            {
+                                rowCount++;
+                                rowClass = "rowA";
+                                if (rowCount % 2 == 0)
+                                {
+                                    rowClass = "rowB";
+                                }
+                                <div class="row py-1 d-flex align-items-center  @rowClass">
+                                    <div class="col-5 ">
+                                        @item.Title
+                                    </div>
+                                    <div class="col ">
+                                        @item.YearMonth
+                                    </div>
+                                    <div class="col ">
+                                        @item.Owner
+                                    </div>
+                                    <div class="col ">
+                                        @item.DateUpdated.ToString("M/d/yyyy")
+                                    </div>
+                                    <div class="text-center " style="width: 120px;">
+                                        <a href="photoFolder/@item.Id" class="btnView" target="_photoFolder">View</a>
+                                    </div>
+                                </div>
+                            }
+
+                            @foreach (var item in snippets)
+                            {
+                                rowCount++;
+                                rowClass = "rowA";
+                                if (rowCount % 2 == 0)
+                                {
+                                    rowClass = "rowB";
+                                }
+                                <div class="row py-1 d-flex align-items-center  @rowClass">
+                                    <div class="col-5 ">
+                                        @item.Title
+                                    </div>
+                                    <div class="col ">
+                                        @item.YearMonth
+                                    </div>
+                                    <div class="col ">
+                                        @item.Owner
+                                    </div>
+                                    <div class="col ">
+                                        @item.DateUpdated.ToString("M/d/yyyy")
+                                    </div>
+                                    <div class="text-center " style="width: 120px;">
+                                        <a href="snippet/@item.Id" class="btnView" target="_snippet">View</a>
+                                    </div>
+                                </div>
+                            }
+
+                            @foreach (var item in stories)
+                            {
+                                rowCount++;
+                                rowClass = "rowA";
+                                if (rowCount % 2 == 0)
+                                {
+                                    rowClass = "rowB";
+                                }
+                                <div class="row py-1 d-flex align-items-center  @rowClass">
+                                    <div class="col-5 ">
+                                        @item.Title
+                                        @if (item.ChapterCount.Length > 1)
+                                        {
+                                            <br />
+                                            <span class="ps-5">@item.ChapterCount</span>
+                                        }
+                                    </div>
+                                    <div class="col ">
+                                        @item.YearMonth
+                                    </div>
+                                    <div class="col ">
+                                        @item.Owner
+                                    </div>
+                                    <div class="col ">
+                                        @item.DateUpdated.ToString("M/d/yyyy")
+                                    </div>
+                                    <div class="text-center " style="width: 120px;">
+                                        <a href="story/@item.Id" class="btnView" target="_story">View</a>
+                                    </div>
+                                </div>
+                            }
+
+                            @foreach (var item in videos)
+                            {
+                                rowCount++;
+                                rowClass = "rowA";
+                                if (rowCount % 2 == 0)
+                                {
+                                    rowClass = "rowB";
+                                }
+                                <div class="row py-1 d-flex align-items-center  @rowClass">
+                                    <div class="col-5">
+                                        @item.Title
+                                    </div>
+                                    <div class="col ">
+                                        @item.YearMonth
+                                    </div>
+                                    <div class="col ">
+                                        @item.Owner
+                                    </div>
+                                    <div class="col ">
+                                        @item.DateUpdated.ToString("M/d/yyyy")
+                                    </div>
+                                    <div class="text-center " style="width: 120px;">
+                                        <a href="video/@item.Id" class="btnView" target="_video">View</a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private BrowseDTO browsing { get; set; }
+
+    BrowseTally tally = new BrowseTally();
+    private List<DecadeDTO> decades { get; set; }
+    private List<DecadeElementDTO> decadeElements { get; set; }
+    string prevDecade = "9999";
+    string decadeTitle = "";
+
+    string elementTitle = "";
+    string rowClass = "";
+    int rowCount = 0;
+    bool showList = false;
+
+    private List<PhotoAlbumDTO> photoAlbums { get; set; }
+    private List<PhotoFolderDTO> photoFolders { get; set; }
+    private List<SnippetDTO> snippets { get; set; }
+    private List<StoryDTO> stories { get; set; }
+    private List<VideoDTO> videos { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        tally = await baseRepository.GetBrowseTally();
+    }
+
+    private async Task ViewDElement(string decadeStr, string element)
+    {
+        decadeTitle = decadeStr;
+        photoAlbums = new List<PhotoAlbumDTO>();
+        photoFolders = new List<PhotoFolderDTO>();
+        snippets = new List<SnippetDTO>();
+        stories = new List<StoryDTO>();
+        videos = new List<VideoDTO>();
+
+        if (element == "Photo Album")
+        {
+            elementTitle = "Photo Albums";
+            var tPhotoAlbums = await baseRepository.GetPhotoAlbumsByDecade(decadeStr);
+            photoAlbums = tPhotoAlbums.ToList();
+        }
+
+        if (element == "Photo Folder")
+        {
+            elementTitle = "Photo Folders";
+            var tPhotoFolders = await baseRepository.GetPhotoFoldersByDecade(decadeStr);
+            photoFolders = tPhotoFolders.ToList();
+        }
+
+        if (element == "Snippet")
+        {
+            elementTitle = "Snippets";
+            var tSnippets = await baseRepository.GetSnippetsByDecade(decadeStr);
+            snippets = tSnippets.ToList();
+        }
+
+        if (element == "Story")
+        {
+            elementTitle = "Stories";
+            var tStories = await baseRepository.GetStoriesByDecade(decadeStr);
+            stories = tStories.ToList();
+        }
+
+        if (element == "Video")
+        {
+            elementTitle = "Videos";
+            var tVideos = await baseRepository.GetVideosByDecade(decadeStr);
+            videos = tVideos.ToList();
+        }
+
+        showList = true;
+        StateHasChanged();
+    }
+
+    private async Task GetList(string byWhat)
+    {
+        var tBrowsing = await baseRepository.GetBrowsing(byWhat);
+        browsing = tBrowsing;
+
+        decades = browsing.Decades;
+        decadeElements = browsing.DecadeElements;
+
+        showList = false;
+        StateHasChanged();
+    }
+}

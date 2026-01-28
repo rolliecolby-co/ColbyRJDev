@@ -1,0 +1,85 @@
+﻿@page "/user/add"
+@rendermode InteractiveServer
+
+@layout AdminLayout
+
+@inject IHttpContextAccessor httpContext
+@inject IAppUserRepository AppUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row">
+    <div class="col">
+    </div>
+    <div class="col-4">
+        <HeadingC Text="Add User" />
+
+        @if (!string.IsNullOrEmpty(@message))
+        {
+            <p class="text-danger">
+                @message
+            </p>
+        }
+
+        <EditForm Model="@AppUser" OnValidSubmit="AddUser">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="form-group mt-2">
+                        <label>Name</label>
+                        <div>
+                            <InputText @bind-Value="@AppUser.Name" class="form-control" />
+                            <ValidationMessage For="@(() => AppUser.Name)" />
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Display Name</label>
+                        <div>
+                            <InputText @bind-Value="@AppUser.DisplayName" class="form-control" />
+                            <ValidationMessage For="@(() => AppUser.DisplayName)" />
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Email</label>
+                        <div>
+                            <InputText @bind-Value="@AppUser.Email" class="form-control" />
+                            <ValidationMessage For="@(() => AppUser.Email)" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-4 offset-4 text-center">
+                    <button type="submit" class="btnAdd">
+                        Add User
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col">
+    </div>
+</div>
+
+
+@code {
+    AppUserCreateDTO AppUser = new AppUserCreateDTO();
+    public int appUserId { get; set; }
+    public bool IsProcessing { get; set; } = false;
+    public string message { get; set; } = "";
+    string userRole { get; set; }
+
+    private async Task AddUser()
+    {
+        IsProcessing = true;
+        var response = await AppUserRepository.Create(AppUser);
+        if (response.Substring(0, 2) == "id")
+        {
+            navManager.NavigateTo($"/users");
+        }
+        message = response;
+        IsProcessing = false;
+    }
+}

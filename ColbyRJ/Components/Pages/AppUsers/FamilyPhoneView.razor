@@ -1,0 +1,131 @@
+﻿@page "/phoneFamily/{id:int}"
+
+@layout ViewLayout
+
+@inject IAppUserRepository userRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row mt-2">
+    <div class="col-8">
+        <HeadingC Text="Family Member" />
+    </div>
+    <div class="col text-center pt-2">
+        <a href="phoneFamily" class="pBtnReturn">Return</a>
+    </div>
+</div>
+
+<div class="viewDiv">
+        <div class="divItem text-center">
+            <h5 class="mt-1">@fMember.Name</h5>
+        </div>
+
+    <div class=" mt-2">
+        <label>Display Name</label>
+        <div class="divItem text-center">
+            @fMember.DisplayName
+        </div>
+    </div>
+    
+    @if (fMember.MobilePhoneDisplay.Length > 0)
+    {
+        <div class=" mt-2">
+            <label>Mobile Phone</label>
+            <div class="divItem text-center">
+                @fMember.MobilePhoneDisplay
+            </div>
+        </div>
+    }
+    @if (fMember.HomePhoneDisplay.Length > 0)
+    {
+        <div class=" mt-2">
+            <label>Home Phone</label>
+            <div class="divItem text-center">
+                @fMember.HomePhoneDisplay
+            </div>
+        </div>
+    }
+
+    <div class=" mt-2">
+        <label>Email</label>
+        <div class="divItem text-center">
+            @fMember.Email
+        </div>
+    </div>
+
+    @if (fMember.Address.Length > 0)
+    {
+        <div class=" mt-2">
+            <label>Address</label>
+            <div class="divItem text-center">
+                @fMember.Address
+            </div>
+        </div>
+    }
+    @if (fMember.Birthday.Length > 0)
+    {
+        <div class=" mt-2">
+            <label>Birthday</label>
+            <div class="divItem text-center">
+                @fMember.Birthday
+            </div>
+        </div>
+    }
+    @if (fMember.DisplayCouple.Length > 0)
+    {
+        <div class=" mt-2">
+            <label>Couple Name</label>
+            <div class="divItem text-center">
+                @fMember.DisplayCouple
+            </div>
+        </div>
+    }
+    @if (fMember.Anniversary.Length > 0)
+    {
+        <div class=" mt-2">
+            <label>Anniversary</label>
+            <div class="divItem text-center">
+                @fMember.Anniversary
+            </div>
+        </div>
+    }
+    @if (fMember.Hobbies.Length > 10)
+    {
+        <div class=" mt-2">
+            <label>Hobbies</label>
+            <div class="divItem">
+                @((MarkupString)fMember.Hobbies)
+            </div>
+        </div>
+    }
+    @if (fMember.Interests.Length > 10)
+    {
+        <div class=" mt-2">
+            <label>Interests</label>
+            <div class="divItem">
+                @((MarkupString)fMember.Interests)
+            </div>
+        </div>
+    }
+    @if (fMember.Note.Length > 10)
+    {
+        <div class=" mt-2">
+            <label>Note</label>
+            <div class="divItem">
+                @((MarkupString)fMember.Note)
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private AppUserDTO fMember { get; set; } = new AppUserDTO();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var family = await userRepository.GetUser(Id);
+        fMember = family;
+    }
+}

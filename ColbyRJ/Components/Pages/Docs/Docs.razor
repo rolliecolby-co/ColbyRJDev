@@ -1,0 +1,146 @@
+﻿@page "/docs"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IDocRepository docRepository
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2">
+        <HeadingC Text="Docs" />
+    </div>
+    <div class="col mb-2">
+        @if (groupedBy != null && groupedBy.Count > 0)
+        {
+            <select value="@selectedGroupBy" class="form-select" @onchange="OnGroupByChanged">
+                <option value="">-- Filter By Grouping --</option>
+                @foreach (var item in groupedBy)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        }
+    </div>
+    <div class="mb-2 text-center" style="width: 200px;">
+        <a href="doc/add" class="btnAdd">Add New Doc</a>
+    </div>
+</div>
+
+@if (docs != null && docs.Any())
+{
+    <div class="row ">
+        <div class="col mt-2">
+            <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@docs" TItem="DocDTO"
+                            PagerHorizontalAlign="HorizontalAlign.Center">
+                <Columns>
+                    <RadzenDataGridColumn Property="GroupedBy" Title="Grouped By" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="Title" Title="Title" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="PdfCount" Title="PDFs" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="CommentCount" Title="Comments" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="ActiveStr" Title="Active" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+
+                    <RadzenDataGridColumn Property="Id" Width="70px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            @{
+                                var link = "doc/edit/" + data.Id;
+                            }
+                            <RadzenLink Path=@link Text="Edit" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Id" Width="70px" HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                          Click=@(() => DeleteDoc(data.Id)) />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<DocDTO> docs { get; set; } = new List<DocDTO>();
+    private List<DocDTO> allDocs { get; set; } = new List<DocDTO>();
+    private int DeleteDocId { get; set; } = 0;
+    private string groupedByPrev = "zzz";
+    private List<string> groupedBy;
+    private string userEmail = "";
+    private string userRole = "";
+    string selectedGroupBy = "";
+    string selectedDecade = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDocs();
+
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var user = authstate.User;
+        userEmail = user.Identity.Name;
+        var appUser = await appUserRepository.GetUserByEmail(userEmail);
+        if (appUser != null)
+        {
+            userRole = appUser.Role;
+        }
+    }
+
+    private async Task LoadDocs()
+    {
+        var tDocs = await docRepository.GetDocs();
+        allDocs = tDocs.ToList();
+
+        groupedBy = allDocs.OrderBy(q => q.GroupedBy).Select(q => q.GroupedBy).ToList();
+        groupedBy = groupedBy.AsQueryable().Distinct().ToList();
+    }
+
+    async Task DeleteDoc(int Id)
+    {
+        OpenDeleteDocDialog(Id);
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await docRepository.Delete(DeleteDocId);
+            DeleteDialogOpen = false;
+            await LoadDocs();
+            docs = new List<DocDTO>();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteDocDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteDocId = id;
+        Text = "Do you want to delete this Document?";
+        StateHasChanged();
+    }
+
+    private void OnGroupByChanged(ChangeEventArgs e)
+    {
+        selectedGroupBy = e.Value.ToString();
+        docs = allDocs.Where(q => q.GroupedBy == selectedGroupBy).ToList();
+        StateHasChanged();
+    }
+}

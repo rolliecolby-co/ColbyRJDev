@@ -1,0 +1,262 @@
+﻿@page "/story/{key}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IStoryRepository storyRepository
+@inject IMapper mapper
+
+<div class="viewHeader">
+    <div class="row mt-3 mb-1">
+        <div class="col-9 mb-2 ps-4">
+            <HeadingC Text="Story" />
+        </div>
+        <div class="col text-center">
+            <button class="btnClose mx-2 mt-1" @onclick="@(e => OnButtonClick("close"))">Close Tab</button>
+            <AuthorizeView>
+                <a href="storyComment/add/@Story.Id" class="btnAdd mx-2 mt-1">Add Comment</a>
+            </AuthorizeView>
+        </div>
+    </div>
+</div>
+
+<div class="viewDiv">
+    <div class="row">
+        <div class="col text-center">
+            <div class="divItem">
+                <h5 class="mt-1">@Story.YearMonth</h5>
+            </div>
+        </div>
+        <div class="col-6 text-center">
+            <div class="divItem">
+                <h5>@Story.Title</h5>
+            </div>
+        </div>
+        <div class="col text-center">
+            <div class="divItem">
+                <h5 class="mt-1">Owner: @Story.Owner</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        @if (!hideBody)
+        {
+            <div class="col">
+                @if (Story.AudioUrl.Length > 10)
+                {
+                    <div class="mb-2">
+                        <div class="text-center">
+                            <audio class="audioBorder" controls="controls"><source src="@Story.AudioUrl" /></audio>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="col text-center">
+                @if (Comments != null && Comments.Count > 0 && showComments == false)
+                {
+                    <button type="button" @onclick="() => ShowComments()" class="btnShow">Show Comments</button>
+                }
+            </div>
+        }
+
+        @if (Story.Photos != null && Story.Photos.Count > 0)
+        {
+            <div class="col text-center">
+                @if (photoSize != "small")
+                {
+                    <button class="btnGroup" onclick="@(() => SetView("small"))">
+                        Small Photos
+                    </button>
+                }
+            </div>
+            <div class="col text-center">
+                @if (photoSize != "medium")
+                {
+                    <button class="btnGroup" onclick="@(() => SetView("medium"))">
+                        Medium Photos
+                    </button>
+                }
+            </div>
+            <div class="col text-center">
+                @if (photoSize != "large")
+                {
+                    <button class="btnGroup" onclick="@(() => SetView("large"))">
+                        Large Photos
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="row mt-2">
+        @if (!hideBody)
+        {
+            <div class="col">
+                <div class="divItem">
+                    @((MarkupString)bodyCol1)
+                </div>
+            </div>
+            @if (bodyCol2.Length > 0)
+            {
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol2)
+                    </div>
+                </div>
+            }
+            @if (bodyCol3.Length > 0)
+            {
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol3)
+                    </div>
+                </div>
+            }
+        }
+
+        <div class="col">
+            @if (Story.Photos != null && Story.Photos.Count > 0)
+            {
+                <div class="">
+                    @if (!hideBody)
+                    {
+                        <div class="row">
+                            @foreach (var item in Story.Photos)
+                            {
+                                <div class="@photoColClass mb-2">
+                                    <div class="viewPhotoCard">
+                                        <div>
+                                            <img src="@item.PhotoUrl" class="img-fluid viewPhoto" />
+                                        </div>
+                                        @if (item.Caption.Length > 1)
+                                        {
+                                            <div class="text-center pt-2">
+                                                <h5>@item.Caption</h5>
+                                            </div>
+                                        }
+                                        @if (item.PhotoDateStr.Length > 1)
+                                        {
+                                            <div class="text-center">
+                                                @item.PhotoDateStr
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (photoSize == "medium" || photoSize == "large")
+    {
+        <div class="row mt-2">
+            <ViewPhotosC Photos="@Photos" PhotoSize="@photoSize" />
+        </div>
+    }
+
+    @if (Comments != null && Comments.Count > 0 && showComments)
+    {
+        <ViewCommentsC Comments="@Comments" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Key { get; set; }
+    private StoryDTO Story { get; set; } = new StoryDTO();
+    public List<PhotoDTO> Photos = new List<PhotoDTO>();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string title { get; set; }
+    string photoColClass = "col-4";
+    bool showComments = false;
+    bool hideBody = false;
+    string photoSize = "small";
+    string bodyCol1 = "";
+    string bodyCol2 = "";
+    string bodyCol3 = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var story = await storyRepository.GetStoryByKey(Key);
+        Story = story;
+        if (Story.Comments != null && Story.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<StoryCommentDTO>, List<CommentDTO>>(Story.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        if (Story.Body.Length > 10)
+        {
+            bodyCol1 = Story.Body;
+            string[] cols = bodyCol1.Split("<p>newColumn</p>");
+
+            int colNum = 0;
+            foreach (var aCol in cols)
+            {
+                colNum++;
+                if (colNum == 1)
+                {
+                    bodyCol1 = aCol;
+                    photoColClass = "col-3";
+                }
+                if (colNum == 2)
+                {
+                    bodyCol2 = aCol;
+                    photoColClass = "col-4";
+                }
+                if (colNum == 3)
+                {
+                    bodyCol3 = aCol;
+                    photoColClass = "col-6";
+                }
+            }
+        }
+
+        if (Story.Photos != null)
+        {
+            foreach (var vPhoto in Story.Photos)
+            {
+                var photo = new PhotoDTO
+                    {
+                        Caption = vPhoto.Caption,
+                        OrderBy = vPhoto.OrderBy,
+                        PhotoDate = vPhoto.PhotoDate,
+                        PhotoDateStr = vPhoto.PhotoDateStr,
+                        PhotoUrl = vPhoto.PhotoUrl
+                    };
+
+                Photos.Add(photo);
+            }
+        }
+    }
+
+    private void OnButtonClick(string value)
+    {
+        JS.InvokeVoidAsync($"window.{value}");
+    }
+
+    private void ShowComments()
+    {
+        showComments = true;
+        StateHasChanged();
+    }
+
+    private async Task SetView(string viewStr)
+    {
+        photoSize = viewStr;
+        showComments = false;
+        if (photoSize == "small")
+        {
+            hideBody = false;
+        }
+        else
+        {
+            hideBody = true;
+        }
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,111 @@
+﻿@page "/admin"
+
+@layout AdminLayout
+
+@inject IHintRepository hintRepository
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="adminPanel">
+            @if (leftHints != null && leftHints.Count > 0)
+            {
+                var count = 1;
+                foreach (var item in leftHints)
+                {
+                    if (count == 1)
+                    {
+                        <CollapsableC Title="@item.Title" Collapsed="false">
+                            @((MarkupString)@item.Value)
+                        </CollapsableC>
+                    }
+                    else
+                    {
+                        <CollapsableC Title="@item.Title" Collapsed="true">
+                            @((MarkupString)@item.Value)
+                        </CollapsableC>
+                    }
+                    count++;
+                }
+            }
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="adminPanel">
+            @if (centerHints != null && centerHints.Count > 0)
+            {
+                var count = 1;
+                foreach (var item in centerHints)
+                {
+                    if (count == 1)
+                    {
+                        <CollapsableC Title="@item.Title" Collapsed="false">
+                            @((MarkupString)@item.Value)
+                        </CollapsableC>
+                    }
+                    else
+                    {
+                        <CollapsableC Title="@item.Title" Collapsed="true">
+                            @((MarkupString)@item.Value)
+                        </CollapsableC>
+                    }
+                    count++;
+                }
+            }
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="adminPanel">
+            @if (rightHints != null && rightHints.Count > 0)
+            {
+                var count = 1;
+                foreach (var item in rightHints)
+                {
+                    if (count == 1)
+                    {
+                        <CollapsableC Title="@item.Title" Collapsed="false">
+                            @((MarkupString)@item.Value)
+                        </CollapsableC>
+                    }
+                    else
+                    {
+                        <CollapsableC Title="@item.Title" Collapsed="true">
+                            @((MarkupString)@item.Value)
+                        </CollapsableC>
+                    }
+                    count++;
+                }
+            }
+        </div>
+    </div>
+</div>
+@*
+<div>
+    <a href="SendSatOptIn">Send OptIn</a>
+</div>
+<div>
+    <a href="SatOptInStatus">Check OptIn</a>
+</div>*@
+
+@code {
+    private List<HintDTO> leftHints;
+    private List<HintDTO> centerHints;
+    private List<HintDTO> rightHints;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHints();
+    }
+
+    private async Task LoadHints()
+    {
+        var result = await hintRepository.GetHintsByKey("AL");
+        leftHints = result.ToList();
+
+        var result2 = await hintRepository.GetHintsByKey("AC");
+        centerHints = result2.ToList();
+
+        var result3 = await hintRepository.GetHintsByKey("AR");
+        rightHints = result3.ToList();
+    }
+}

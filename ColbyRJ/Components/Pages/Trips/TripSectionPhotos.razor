@@ -1,0 +1,110 @@
+﻿@page "/tripSectionPhotos/{sectionId:int}"
+
+@layout EditLayout
+@inject ITripRepository tripRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Trip Section Photos: Caption - Photo - Order #" />
+    </div>
+    <div class="col text-center">
+        <a href="tripSection/edit/@SectionId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (Section != null && Photos != null && Photos.Any())
+{
+    <div class="row ">
+        <div class="col text-center">
+            Trip: <b>@Group.Trip.Title</b>
+        </div>
+        <div class="col text-center">
+            Group: <b>@Section.TripGroup.Name</b>
+        </div>
+        <div class="col text-center">
+            Section: <b>@Section.Name</b>
+        </div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in Photos)
+        {
+            <div class="col-4">
+                <div class="photoCard">
+                    <div class="photoCaption text-center">
+                        @item.Caption
+                    </div>
+                    <div class="photoBody text-center">
+                        <img src="@item.PhotoUrl" class="img-fluid photoBorder" />
+                    </div>
+                    <div class="photoFooter">
+                        <div class="row">
+                            <div class="col text-center">
+                                @item.Sort
+                            </div>
+                            <div class="col text-end">
+                                <a href="@($"tripElementPhotoEdit/Section/{Section.Id}/{item.Id}")" class="btnEdit">Edit</a>
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteSectionPhotoDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int SectionId { get; set; }
+    private TripGroupDTO Group { get; set; } = new TripGroupDTO();
+    private TripSectionDTO Section { get; set; } = new TripSectionDTO();
+    List<TripPhotoDTO> Photos { get; set; } = new List<TripPhotoDTO>();
+    private int DeleteSectionPhotoId { get; set; } = 0;
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var section = await tripRepository.GetSection(SectionId);
+        Section = section;
+
+        var group = await tripRepository.GetGroup(Section.TripGroup.Id);
+        Group = group;
+
+        await LoadSectionPhotos();
+        StateHasChanged();
+    }
+
+    private async Task LoadSectionPhotos()
+    {
+        var photos = await tripRepository.GetSectionPhotos(SectionId);
+        Photos = photos.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await tripRepository.DeletePhoto(DeleteSectionPhotoId);
+            DeleteDialogOpen = false;
+            await LoadSectionPhotos();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteSectionPhotoDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteSectionPhotoId = id;
+        Text = "Do you want to delete this Trip Section Photo?";
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,114 @@
+﻿@page "/storyChapterPhotos/{chapterId:int}"
+
+@layout EditLayout
+@inject IStoryChapterRepository storyChapterRepository
+@inject IStoryChapterPhotoRepository storyChapterPhotoRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Story Chapter Photos: Caption - Photo - Order # - When" />
+    </div>
+    <div class="col text-center">
+        <a href="storyChapter/edit/@ChapterId" class="btnReturn">Return</a>
+    </div>
+</div>
+<div class="row  mb-2 pt-2">
+    <div class="col"></div>
+    <div class="col-6">
+        <SubHeadingC Text="@storyStr" />
+    </div>
+    <div class="col-4">
+        <SubSubHeadingC Text="@storyChapterStr" />
+    </div>
+    <div class="col"></div>
+</div>
+
+@if (Chapter != null && Photos != null && Photos.Any())
+{
+    <div class="row mt-3">
+        @foreach (var item in Photos)
+        {
+            <div class="col-4">
+                <div class="photoCard">
+                    <div class="photoCaption text-center">
+                        @item.Caption
+                    </div>
+                    <div class="photoBody text-center">
+                        <img src="@item.PhotoUrl" class="img-fluid photoBorder" />
+                    </div>
+                    <div class="photoFooter">
+                        <div class="row">
+                            <div class="col text-center">
+                                @item.OrderBy
+                            </div>
+                            <div class="col text-center">
+                                @item.PhotoDateStr
+                            </div>
+                            <div class="col text-end">
+                                <a href="@($"storyChapterPhoto/edit/{item.Id}")" class="btnEdit">Edit</a>
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteStoryChapterPhotoDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int ChapterId { get; set; }
+    private StoryChapterDTO Chapter { get; set; } = new StoryChapterDTO();
+    List<StoryChapterPhotoDTO> Photos { get; set; } = new List<StoryChapterPhotoDTO>();
+    private int DeleteStoryChapterPhotoId { get; set; } = 0;
+    string storyStr = "";
+    string storyChapterStr = "";
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var chapter = await storyChapterRepository.GetChapter(ChapterId);
+        Chapter = chapter;
+
+        storyStr = "Grouped By / Story: " + Chapter.Story.GroupedBy + " / " + Chapter.Story.Title;
+        storyChapterStr = "Story Chapter: " + Chapter.Title;
+
+        await LoadStoryChapterPhotos();
+        StateHasChanged();
+    }
+
+    private async Task LoadStoryChapterPhotos()
+    {
+        var photos = await storyChapterPhotoRepository.GetPhotos(ChapterId);
+        Photos = photos.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await storyChapterPhotoRepository.Delete(DeleteStoryChapterPhotoId);
+            DeleteDialogOpen = false;
+            await LoadStoryChapterPhotos();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteStoryChapterPhotoDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteStoryChapterPhotoId = id;
+        Text = "Do you want to delete this Story Chapter Photo?";
+        StateHasChanged();
+    }
+
+}

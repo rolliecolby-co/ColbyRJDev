@@ -1,0 +1,152 @@
+﻿@page "/phoneStories"
+@rendermode InteractiveServer
+
+@layout PhoneLayout
+
+@inject IStoryRepository storyRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="">
+    <HeadingC Text="Stories" />
+</div>
+<div class="mt-2">
+    @if (groupedBy != null && groupedBy.Count > 0)
+    {
+        <select value="@selectedGroupBy" class="form-select" @onchange="OnGroupByChanged">
+            <option value="">-- Filter By Grouping --</option>
+            @foreach (var item in groupedBy)
+            {
+                <option value="@item">@item</option>
+            }
+        </select>
+    }
+</div>
+<div class="mt-2">
+    @if (decades != null && decades.Count > 0)
+    {
+        <select value="@selectedDecade" class="form-select" @onchange="OnDecadeChanged">
+            <option value="">-- Filter By Decade --</option>
+            @foreach (var item in decades)
+            {
+                <option value="@item">@item</option>
+            }
+        </select>
+    }
+</div>
+
+@if (showList)
+{
+    <div class="row mt-2">
+        <div class="col">
+            @foreach (var story in Stories)
+            {
+                <div class="m-2" style="float: left;">
+                    <a href="phoneStory/@story.Key" class="btnList" >@story.Title</a>
+
+                    @foreach (var chapter in story.Chapters)
+                    {
+                        <div class="ms-3 mt-2 pt-2" style="">
+                            <a href="phoneStoryChapter/@chapter.Key" class="btnList2" >@chapter.Title</a>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (stories != null && stories.Count > 0)
+{
+    <div class="mt-2">
+        <RadzenDataGrid Data="@stories" TItem="StoryDTO">
+            <Template Context="story">
+                <RadzenTabs>
+                    <Tabs>
+                        <RadzenTabsItem Text="Chapters">
+                            <RadzenDataGrid Data="@story.Chapters">
+                                <Columns>
+                                    <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px" 
+                                        HeaderCssClass="rz-background-color-warning-lighter" />
+                                    <RadzenDataGridColumn Property="Title" Title="Title" HeaderCssClass="rz-background-color-warning-lighter" />
+                                    <RadzenDataGridColumn Property="Id" Width="80px" TextAlign="TextAlign.Center"
+                                                          HeaderCssClass="rz-background-color-warning-lighter">
+                                        <Template Context="data">
+                                            @{
+                                                var link = "phoneStoryChapter/" + data.Key;
+                                            }
+                                            <RadzenLink Path=@link Text="View" Target="_story" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        </RadzenTabsItem>
+                    </Tabs>
+                </RadzenTabs>
+            </Template>
+            <Columns>
+                <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Title" Title="Title" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Id" Width="80px" TextAlign="TextAlign.Center"
+                                      HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        @{
+                            var link = "phoneStory/" + data.Key;
+                        }
+                        <RadzenLink Path=@link Text="View" Target="_story" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+}
+
+@code {
+    private List<StoryDTO> stories;
+    private List<StoryDTO> allStories;
+    private List<StoryDTO> Stories = new List<StoryDTO>();
+    private List<string> groupedBy;
+    private List<string> decades;
+    bool showList = true;
+    string selectedGroupBy = "";
+    string selectedDecade = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStories();
+
+        Stories = allStories.OrderBy(o => o.Title).ToList();
+
+        groupedBy = allStories.OrderBy(q => q.GroupedBy).Select(q => q.GroupedBy).ToList();
+        groupedBy = groupedBy.AsQueryable().Distinct().ToList();
+
+        decades = allStories.OrderBy(q => q.Decade).Select(q => q.Decade).ToList();
+        decades = decades.AsQueryable().Distinct().ToList();
+    }
+
+    private async Task LoadStories()
+    {
+        var tStories = await storyRepository.GetActiveStories();
+        allStories = tStories.ToList();
+    }
+
+    private void OnGroupByChanged(ChangeEventArgs e)
+    {
+        showList = false;
+        selectedDecade = "";
+        selectedGroupBy = e.Value.ToString();
+        stories = allStories.Where(q => q.GroupedBy == selectedGroupBy).ToList();
+        StateHasChanged();
+    }
+
+    private void OnDecadeChanged(ChangeEventArgs e)
+    {
+        showList = false;
+        selectedGroupBy = "";
+        selectedDecade = e.Value.ToString();
+        stories = allStories.Where(q => q.Decade == selectedDecade).ToList();
+        StateHasChanged();
+    }
+}

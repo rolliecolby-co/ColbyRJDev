@@ -1,0 +1,147 @@
+﻿@page "/photoAlbums"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IPhotoAlbumRepository photoAlbumRepository
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2 ">
+        <HeadingC Text="Photo Albums" />
+    </div>
+    <div class="col mb-2">
+        @if (groupedBy != null && groupedBy.Count > 0)
+        {
+            <select value="@selectedGroupBy" class="form-select" @onchange="OnGroupByChanged">
+                <option value="">-- Filter By Grouping --</option>
+                @foreach (var item in groupedBy)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        }
+    </div>
+    <div class=" mb-2 text-center" style="width: 240px;">
+        <a href="photoAlbum/add" class="btnAdd">Add New Photo Album</a>
+    </div>
+</div>
+
+@if (photoAlbums != null && photoAlbums.Any())
+{
+    <div class="row ">
+        <div class="col mt-2">
+            <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@photoAlbums" TItem="PhotoAlbumDTO"
+                            PagerHorizontalAlign="HorizontalAlign.Center">
+                <Columns>
+                    <RadzenDataGridColumn Property="GroupedBy" Title="Grouped By" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="Title" Title="Title" HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="PhotoCount" Title="Photos" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="CommentCount" Title="Comments" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+                    <RadzenDataGridColumn Property="ActiveStr" Title="Active" Width="80px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter" />
+
+                    <RadzenDataGridColumn Property="Id" Width="70px" TextAlign="TextAlign.Center"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            @{
+                                var link = "photoAlbum/edit/" + data.Id;
+                            }
+                            <RadzenLink Path=@link Text="Edit" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Id" Width="70px"
+                                          HeaderCssClass="rz-background-color-info-lighter">
+                        <Template Context="data">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                          Click=@(() => DeletePhotoAlbum(data.Id)) />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<PhotoAlbumDTO> photoAlbums { get; set; } = new List<PhotoAlbumDTO>();
+    private List<PhotoAlbumDTO> allPhotoAlbums { get; set; } = new List<PhotoAlbumDTO>();
+    private int DeletePhotoAlbumId { get; set; } = 0;
+    private string groupedByPrev = "zzz";
+    private List<string> groupedBy;
+    private string userEmail = "";
+    private string userRole = "";
+    string selectedGroupBy = "";
+    string selectedDecade = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPhotoAlbums();
+
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var user = authstate.User;
+        userEmail = user.Identity.Name;
+        var appUser = await appUserRepository.GetUserByEmail(userEmail);
+        if (appUser != null)
+        {
+            userRole = appUser.Role;
+        }
+    }
+
+    private async Task LoadPhotoAlbums()
+    {
+        var tPhotoAlbums = await photoAlbumRepository.GetPhotoAlbums();
+        allPhotoAlbums = tPhotoAlbums.ToList();
+
+        groupedBy = allPhotoAlbums.OrderBy(q => q.GroupedBy).Select(q => q.GroupedBy).ToList();
+        groupedBy = groupedBy.AsQueryable().Distinct().ToList();
+    }
+
+    async Task DeletePhotoAlbum(int Id)
+    {
+        OpenDeletePhotoAlbumDialog(Id);
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await photoAlbumRepository.Delete(DeletePhotoAlbumId);
+            DeleteDialogOpen = false;
+            await LoadPhotoAlbums();
+            photoAlbums = new List<PhotoAlbumDTO>();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeletePhotoAlbumDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeletePhotoAlbumId = id;
+        Text = "Do you want to delete this Photo Album?";
+        StateHasChanged();
+    }
+
+    private void OnGroupByChanged(ChangeEventArgs e)
+    {
+        selectedGroupBy = e.Value.ToString();
+        photoAlbums = allPhotoAlbums.Where(q => q.GroupedBy == selectedGroupBy).ToList();
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,108 @@
+﻿@page "/phoneStory/{key}"
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IStoryRepository storyRepository
+@inject IMapper mapper
+
+<div class="">
+    <HeadingC Text="Story" />
+</div>
+<div class="text-center mt-2 pb-2">
+    <a href="phoneStories" class="pBtnReturn">Return</a>
+</div>
+
+<div class="viewDiv">
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">@Story.YearMonth</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5>@Story.Title</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">Owner: @Story.Owner</h5>
+    </div>
+
+    @if (Story.AudioUrl.Length > 10)
+    {
+        <div class="mt-2 text-center">
+            <audio class="audioBorder" controls="controls"><source src="@Story.AudioUrl" /></audio>
+        </div>
+    }
+
+    <div class="divItem mt-1">
+        @((MarkupString)remarks)
+    </div>
+
+    @if (Story.Photos != null && Story.Photos.Count > 0)
+    {
+        @foreach (var item in Story.Photos)
+        {
+            <div class="mt-2">
+                <div class="viewPhotoCard">
+                    <div>
+                        <img src="@item.PhotoUrl" class="img-fluid viewPhoto" />
+                    </div>
+                    @if (item.Caption.Length > 1)
+                    {
+                        <div class="text-center pt-2">
+                            <h5>@item.Caption</h5>
+                        </div>
+                    }
+                    @if (item.PhotoDateStr.Length > 1)
+                    {
+                        <div class="text-center">
+                            @item.PhotoDateStr
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+        <ViewPhoneCommentsC Comments="Comments" />
+    }
+</div>
+
+
+@code {
+    [Parameter] public string Key { get; set; }
+    private StoryDTO Story { get; set; } = new StoryDTO();
+    public List<PhotoDTO> Photos = new List<PhotoDTO>();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string remarks = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var story = await storyRepository.GetStoryByKey(Key);
+        Story = story;
+        if (Story.Comments != null && Story.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<StoryCommentDTO>, List<CommentDTO>>(Story.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        if (Story.Photos != null)
+        {
+            foreach (var vPhoto in Story.Photos)
+            {
+                var photo = new PhotoDTO
+                    {
+                        Caption = vPhoto.Caption,
+                        OrderBy = vPhoto.OrderBy,
+                        PhotoDate = vPhoto.PhotoDate,
+                        PhotoDateStr = vPhoto.PhotoDateStr,
+                        PhotoUrl = vPhoto.PhotoUrl
+                    };
+
+                Photos.Add(photo);
+            }
+        }
+
+        remarks = Story.Body;
+        remarks = remarks.Replace("<p>newColumn</p>", "");
+    }
+}

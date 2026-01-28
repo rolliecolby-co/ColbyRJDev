@@ -1,0 +1,161 @@
+﻿@page "/gallerySectionsDecades"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IGalleryRepository galleryRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col mb-2">
+        <HeadingC Text="Gallery Sections" />
+    </div>
+    <div class="col mb-2">
+        <HeadingC Text="Gallery Decades" />
+    </div>
+</div>
+
+
+<div class="row mt-3">
+    <div class="col">
+        <div class="row">
+            <div class="col">
+                @if (Sections != null && Sections.Count > 0)
+                {
+                    @foreach (var s in Sections)
+                    {
+                        <div class="m-2" style="float: left;">
+                            <span class="btnList">@s.Section</span>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        @if (showAddSection)
+        {
+            <EditForm Model="@Section" OnValidSubmit="AddSection">
+                <DataAnnotationsValidator />
+
+                <div class="row mt-3">
+                    <div class="col">
+                        <div class="form-group">
+                            <label>Section</label>
+                            <div>
+                                <InputText @bind-Value="@Section.Section" class="form-control" />
+                                <ValidationMessage For="() => Section.Section"></ValidationMessage>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="mt-3 text-center">
+                            <button type="submit" class="btnAdd">
+                                Add Section
+                            </button>
+                        </div>
+                        <div class="alert alert-info mt-1">
+                            Add a Section, as appropriate, for your posted Photo to the Photo Gallery.
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+        }
+    </div>
+    <div class="col">
+        <div class="row">
+            <div class="col">
+                @if (Decades != null && Decades.Count > 0)
+                {
+                    @foreach (var d in Decades)
+                    {
+                        <div class="m-2" style="float: left;">
+                            <span class="btnList">@d.Decade</span>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        @if (showAddDecade)
+        {
+            <EditForm Model="@Decade" OnValidSubmit="AddDecade">
+                <DataAnnotationsValidator />
+
+                <div class="row mt-3">
+                    <div class="col">
+                        <div class="form-group">
+                            <label>Decade</label>
+                            <div>
+                                <InputText @bind-Value="@Decade.Decade" class="form-control" />
+                                <ValidationMessage For="() => Decade.Decade"></ValidationMessage>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="mt-3 text-center">
+                            <button type="submit" class="btnAdd">
+                                Add Decade
+                            </button>
+                        </div>
+                        <div class="alert alert-info mt-1">
+                            Add a Decade, as appropriate, for your posted Photo to the Photo Gallery.
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+
+@code {
+    List<GallerySectionDTO> Sections;
+    GallerySectionDTO Section = new GallerySectionDTO();
+    bool showAddSection = true;
+    List<GalleryDecadeDTO> Decades;
+    GalleryDecadeDTO Decade = new GalleryDecadeDTO();
+    bool showAddDecade = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSections();
+        showAddSection = true;
+        await LoadDecades();
+        showAddDecade = true;
+    }
+
+    private async Task LoadSections()
+    {
+        var result = await galleryRepository.GetSections();
+        Sections = result.ToList();
+        Sections = Sections
+            .OrderBy(q => q.OrderBy)
+            .ThenBy(q => q.Section)
+            .ToList();
+    }
+
+    private async Task LoadDecades()
+    {
+        var result = await galleryRepository.GetDecades();
+        Decades = result.ToList();
+        Decades = Decades
+            .OrderBy(q => q.Decade)
+            .ToList();
+    }
+
+    private async Task AddSection()
+    {
+        var addResult = await galleryRepository.CreateSection(Section);
+        showAddSection = false;
+        await LoadSections();
+        StateHasChanged();
+    }
+
+    private async Task AddDecade()
+    {
+        var addResult = await galleryRepository.CreateDecade(Decade);
+        showAddDecade = false;
+        await LoadDecades();
+        StateHasChanged();
+    }
+
+}

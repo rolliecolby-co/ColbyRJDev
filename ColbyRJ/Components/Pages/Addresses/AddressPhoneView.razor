@@ -1,0 +1,104 @@
+﻿@page "/phoneAddress/{id:int}"
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IAddressRepository addressRepository
+@inject IMapper mapper
+@attribute [Authorize]
+
+<div class="">
+    <HeadingC Text="Home Address" />
+</div>
+<div class="text-center mt-2 pb-2">
+    <a href="phoneAddresses" class="pBtnReturn">Return</a>
+</div>
+
+<div class="viewDiv">
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">@Address.StartDateStr</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5>@Address.HomeAddress</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">For Whom: @Address.Who</h5>
+    </div>
+
+    @if (Address.Remarks.Length > 10)
+    {
+        <div class="divItem mt-1">
+            @((MarkupString)remarks)
+        </div>
+    }
+
+    @if (Address.Photos != null && Address.Photos.Count > 0)
+    {
+        @foreach (var item in Address.Photos)
+        {
+            <div class="mt-2">
+                <div class="viewPhotoCard">
+                    <div>
+                        <img src="@item.PhotoUrl" class="img-fluid viewPhoto" />
+                    </div>
+                    @if (item.Caption.Length > 1)
+                    {
+                        <div class="text-center pt-2">
+                            <h5>@item.Caption</h5>
+                        </div>
+                    }
+                    @if (item.PhotoDateStr.Length > 1)
+                    {
+                        <div class="text-center">
+                            @item.PhotoDateStr
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+        <ViewPhoneCommentsC Comments="Comments" />
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private AddressDTO Address { get; set; } = new AddressDTO();
+    public List<PhotoDTO> Photos = new List<PhotoDTO>();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string remarks = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var address = await addressRepository.GetAddress(Id);
+        Address = address;
+        if (Address.Comments != null && Address.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<AddressCommentDTO>, List<CommentDTO>>(Address.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        if (Address.Photos != null)
+        {
+            foreach (var vPhoto in Address.Photos)
+            {
+                var photo = new PhotoDTO
+                    {
+                        Caption = vPhoto.Caption,
+                        OrderBy = vPhoto.OrderBy,
+                        PhotoDate = vPhoto.PhotoDate,
+                        PhotoDateStr = vPhoto.PhotoDateStr,
+                        PhotoUrl = vPhoto.PhotoUrl
+                    };
+
+                Photos.Add(photo);
+            }
+        }
+
+        remarks = Address.Remarks;
+        remarks = remarks.Replace("<p>newColumn</p>", "");
+    }
+}

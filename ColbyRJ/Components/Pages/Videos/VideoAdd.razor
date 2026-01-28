@@ -1,0 +1,82 @@
+﻿@page "/video/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IVideoRepository videoRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col"></div>
+    <div class="col-6 ">
+        <HeadingC Text="Add Video" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-3">
+    <div class="col"></div>
+    <div class="col-6">
+        <EditForm Model="Video" OnValidSubmit="AddVideo">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <InputText @bind-Value="Video.Title" class="form-control"></InputText>
+                        <ValidationMessage For="() => Video.Title"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group ">
+                        <label>Video Year</label>
+                        <InputNumber @bind-Value="Video.YearInt" class="form-control"></InputNumber>
+                        <ValidationMessage For="() => Video.YearInt"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col">
+                    <SelectMonStrC vLabel="Video Month" @bind-VMonStr="@Video.MonStr" />
+                </div>
+                <div class="col">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col text-center">
+                    <div class="form-group pt-3">
+                        <button class="btnAdd">Add Video</button>
+                        <a href="videos" class="btnReturn">Return</a>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="alertInfo">
+                        <p>
+                            When completing the Add Video, a partial completion, you
+                            will be directed to the Update Video page to complete the Video.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    private VideoCreateDTO Video { get; set; } = new VideoCreateDTO();
+    public bool IsLoading { get; set; } = true;
+
+    private async Task AddVideo()
+    {
+        var response = await videoRepository.Create(Video);
+        if (response.Substring(0, 2) == "id")
+        {
+            navManager.NavigateTo($"video/edit/{response.Substring(3)}");
+        }
+        //navManager.NavigateTo("videos");
+    }
+}

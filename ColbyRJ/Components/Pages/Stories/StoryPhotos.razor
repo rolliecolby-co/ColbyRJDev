@@ -1,0 +1,106 @@
+﻿@page "/storyPhotos/{storyId:int}"
+
+@layout EditLayout
+@inject IStoryRepository storyRepository
+@inject IStoryPhotoRepository storyPhotoRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Story Photos: Caption - Photo - Order # - When" />
+    </div>
+    <div class="col text-center">
+        <a href="story/edit/@StoryId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (Story != null && Photos != null && Photos.Any())
+{
+    <div class="row ">
+        <div class="col-10 offset-1">
+            <SubHeadingC Text="@storyStr" />
+        </div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in Photos)
+        {
+            <div class="col-4">
+                <div class="photoCard">
+                    <div class="photoCaption text-center">
+                        @item.Caption
+                    </div>
+                    <div class="photoBody text-center">
+                        <img src="@item.PhotoUrl" class="img-fluid photoBorder" />
+                    </div>
+                    <div class="photoFooter">
+                        <div class="row">
+                            <div class="col text-center">
+                                @item.OrderBy
+                            </div>
+                            <div class="col text-center">
+                                @item.PhotoDateStr
+                            </div>
+                            <div class="col text-end">
+                                <a href="@($"storyPhoto/edit/{item.Id}")" class="btnEdit">Edit</a>
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteStoryPhotoDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int StoryId { get; set; }
+    private StoryDTO Story { get; set; } = new StoryDTO();
+    List<StoryPhotoDTO> Photos { get; set; } = new List<StoryPhotoDTO>();
+    private int DeleteStoryPhotoId { get; set; } = 0;
+    string storyStr = "";
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var story = await storyRepository.GetStory(StoryId);
+        Story = story;
+        storyStr = "Grouped By / Story: " + Story.GroupedBy + " / " + Story.Title;
+
+        await LoadStoryPhotos();
+        StateHasChanged();
+    }
+
+    private async Task LoadStoryPhotos()
+    {
+        var photos = await storyPhotoRepository.GetPhotos(StoryId);
+        Photos = photos.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await storyPhotoRepository.Delete(DeleteStoryPhotoId);
+            DeleteDialogOpen = false;
+            await LoadStoryPhotos();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteStoryPhotoDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteStoryPhotoId = id;
+        Text = "Do you want to delete this Story Photo?";
+        StateHasChanged();
+    }
+
+}

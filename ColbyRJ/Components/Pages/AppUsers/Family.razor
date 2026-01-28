@@ -1,0 +1,64 @@
+﻿@page "/family"
+@rendermode InteractiveServer
+
+@layout BrowseLayout
+
+@inject IAppUserRepository userRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2 ">
+        <HeadingC Text="Family" />
+    </div>
+</div>
+
+<div class="row ">
+    <div class="col mt-2">
+        <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@family" TItem="AppUserDTO"
+                        PagerHorizontalAlign="HorizontalAlign.Center">
+            <Columns>
+                <RadzenDataGridColumn Property="Name" Title="Name" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="DisplayName" Title="Display Name" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Email" Title="Email" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="MobilePhoneDisplay" Title="Mobile Phone" Width="110px"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="HomePhoneDisplay" Title="Home Phone" Width="110px"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Birthday" Title="Birthday" Width="110px"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Anniversary" Title="Anniversary" Width="110px" TextAlign="TextAlign.Center"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Id" Width="80px" TextAlign="TextAlign.Center"
+                                      HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        @{
+                            var link = "family/" + data.Id;
+                        }
+                        <RadzenLink Path=@link Text="View" Target="_family" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+</div>
+
+@code {
+    private List<AppUserDTO> family;
+    public bool IsLoading { get; set; }
+    bool showList = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFamily();
+    }
+
+    private async Task LoadFamily()
+    {
+        var tUsers = await userRepository.GetUsers();
+        family = tUsers.ToList();
+
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,103 @@
+﻿@page "/phoneDoc/{key}"
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IDocRepository docRepository
+@inject IMapper mapper
+
+<div class="">
+    <HeadingC Text="Document" />
+</div>
+<div class="text-center mt-2 pb-2">
+    <a href="phoneDocs" class="pBtnReturn">Return</a>
+</div>
+
+<div class="viewDiv">
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">@Doc.YearMonth</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5>@Doc.Title</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">Owner: @Doc.Owner</h5>
+    </div>
+
+    <div class="divItem mt-1">
+        @((MarkupString)remarks)
+    </div>
+
+    @if (Doc.Pdfs != null && Doc.Pdfs.Count > 0)
+    {
+        <div class="mt-2">
+            @foreach (var item in Doc.Pdfs)
+            {
+                <div class="viewPdfCard">
+                    @if (item.Title.Length > 1 || item.PdfDateStr.Length > 1)
+                    {
+                        <div class="row mt-2 mb-2">
+                            <div class="col">
+                                <div class="text-center">
+                                    @item.PdfDateStr
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="text-center">
+                                    <h5>@item.Title</h5>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div>
+                        <embed src="@item.PdfUrl" />
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+        <ViewPhoneCommentsC Comments="Comments" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Key { get; set; }
+    private DocDTO Doc { get; set; } = new DocDTO();
+    public List<PdfDTO> Pdfs = new List<PdfDTO>();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string remarks = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var doc = await docRepository.GetDocByKey(Key);
+        Doc = doc;
+        if (Doc.Comments != null && Doc.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<DocCommentDTO>, List<CommentDTO>>(Doc.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        if (Doc.Pdfs != null)
+        {
+            foreach (var vPdf in Doc.Pdfs)
+            {
+                var pdf = new PdfDTO
+                    {
+                        Title = vPdf.Title,
+                        OrderBy = vPdf.OrderBy,
+                        PdfDate = vPdf.PdfDate,
+                        PdfDateStr = vPdf.PdfDateStr,
+                        PdfUrl = vPdf.PdfUrl
+                    };
+
+                Pdfs.Add(pdf);
+            }
+        }
+
+        remarks = Doc.Remarks;
+        remarks = remarks.Replace("<p>newColumn</p>", "");
+    }
+}

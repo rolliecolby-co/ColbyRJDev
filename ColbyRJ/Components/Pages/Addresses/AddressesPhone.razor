@@ -1,0 +1,78 @@
+﻿@page "/phoneAddresses"
+@rendermode InteractiveServer
+
+@layout PhoneLayout
+
+@inject IAddressRepository addressRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="">
+    <HeadingC Text="Home addresses" />
+</div>
+<div class="mt-2">
+    @if (who != null && who.Count > 0)
+    {
+        <select value="@selectedWho" class="form-select" @onchange="OnWhoChanged">
+            <option value="">-- Select For Whom --</option>
+            @foreach (var item in who)
+            {
+                <option value="@item">@item</option>
+            }
+        </select>
+    }
+</div>
+
+@if (addresses != null && addresses.Count > 0)
+{
+    <div class="mt-2">
+        <RadzenDataGrid Data="@addresses" TItem="AddressDTO"
+                        PagerHorizontalAlign="HorizontalAlign.Center">
+            <Columns>
+                <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="HomeAddress" Title="Home Address" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Id" Width="80px" TextAlign="TextAlign.Center"
+                                      HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        @{
+                            var link = "phoneAddress/" + data.Id;
+                        }
+                        <RadzenLink Path=@link Text="View" Target="_address" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+        </div>
+}
+
+
+@code {
+    private List<AddressDTO> addresses;
+    private List<AddressDTO> allAddresses;
+    private List<string> who;
+    string selectedWho = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAddresses();
+
+        var tWho = allAddresses.OrderBy(q => q.Who).Select(q => q.Who).ToList();
+        who = tWho.AsQueryable().Distinct().ToList();
+    }
+
+    private async Task LoadAddresses()
+    {
+        var tAddresses = await addressRepository.GetBrowseAddresses();
+        allAddresses = tAddresses.ToList();
+    }
+
+    private void OnWhoChanged(ChangeEventArgs e)
+    {
+        selectedWho = e.Value.ToString();
+
+        addresses = allAddresses.Where(q => q.Who == selectedWho).ToList();
+        StateHasChanged();
+    }
+}

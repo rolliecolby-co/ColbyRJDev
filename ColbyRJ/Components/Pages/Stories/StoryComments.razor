@@ -1,0 +1,108 @@
+﻿@page "/storyComments/{storyId:int}"
+
+@layout PostEditLayout
+
+
+@inject IStoryRepository storyRepository
+@inject IStoryCommentRepository storyCommentRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Story Comments: Title - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="story/edit/@StoryId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (storyComments != null && storyComments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-4 pt-2 text-center">
+            Grouped By / Story
+        </div>
+        <div class="col-6">
+            <SubHeadingC Text="@storyStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in storyComments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteStoryCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int StoryId { get; set; }
+    private StoryDTO Story { get; set; } = new StoryDTO();
+    private List<StoryCommentDTO> storyComments { get; set; } = new List<StoryCommentDTO>();
+    private int DeleteStoryCommentId { get; set; } = 0;
+    string storyStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var story = await storyRepository.GetStory(StoryId);
+        Story = story;
+        storyStr = Story.GroupedBy + " / " + Story.Title;
+
+        await LoadStoryComments();
+    }
+
+    private async Task LoadStoryComments()
+    {
+        var vStoryComments = await storyCommentRepository.GetComments(StoryId);
+        storyComments = vStoryComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await storyCommentRepository.Delete(DeleteStoryCommentId);
+            DeleteDialogOpen = false;
+            await LoadStoryComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteStoryCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteStoryCommentId = id;
+        Text = "Do you want to delete this Story Comment?";
+        StateHasChanged();
+    }
+
+}

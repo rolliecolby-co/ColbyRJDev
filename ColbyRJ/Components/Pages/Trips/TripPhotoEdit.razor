@@ -1,0 +1,73 @@
+﻿@page "/tripPhoto/edit/{PhotoId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject ITripRepository tripRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-8">
+        <HeadingC Text="Edit Trip Photo" />
+
+        @if (Photo != null && Photo.Trip != null)
+        {
+            <div class="row mt-2">
+                <div class="col-4 pt-2 text-center">
+                    Trip
+                </div>
+                <div class="col">
+                    <SubHeadingC Text="@Photo.Trip.Title" />
+                </div>
+            </div>
+        }
+
+        <EditForm Model="Photo" OnValidSubmit="UpdatePhoto">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col-5">
+                    <div class="form-group">
+                        <label><b>Caption</b></label>
+                        <InputText @bind-Value="Photo.Caption" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Order Number</label>
+                        <InputNumber @bind-Value="Photo.Sort" class="form-control"></InputNumber>
+                    </div>
+                    <div class="form-group text-center mt-3">
+                        <button class="btnSave">Save</button>
+                        <a href="tripPhotos/@Photo.TripId" class="btnReturn">Return</a>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="photo-edit">
+                        <img src="@Photo.PhotoUrl" class="img-fluid" />
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    [Parameter] public int PhotoId { get; set; }
+    private TripPhotoDTO Photo { get; set; } = new TripPhotoDTO();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var photo = await tripRepository.GetPhoto(PhotoId);
+        Photo = photo;
+        StateHasChanged();
+    }
+
+    private async Task UpdatePhoto()
+    {
+        var updatePhotoResult = await tripRepository.UpdatePhoto(Photo);
+
+        navManager.NavigateTo($"tripPhotos/{@Photo.TripId}");
+    }
+}

@@ -1,0 +1,102 @@
+﻿@page "/tripComments/{tripId:int}"
+
+@layout PostEditLayout
+
+
+@inject ITripRepository tripRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Trip Comments: Title - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="trip/edit/@TripId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (tripComments != null && tripComments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-6">
+            <SubHeadingC Text="@Trip.Title" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in tripComments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteTripCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int TripId { get; set; }
+    private TripDTO Trip { get; set; } = new TripDTO();
+    private List<TripCommentDTO> tripComments { get; set; } = new List<TripCommentDTO>();
+    private int DeleteTripCommentId { get; set; } = 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var trip = await tripRepository.GetTrip(TripId);
+        Trip = trip;
+
+        await LoadTripComments();
+    }
+
+    private async Task LoadTripComments()
+    {
+        var vTripComments = await tripRepository.GetComments(TripId);
+        tripComments = vTripComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await tripRepository.DeleteComment(DeleteTripCommentId);
+            DeleteDialogOpen = false;
+            await LoadTripComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteTripCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteTripCommentId = id;
+        Text = "Do you want to delete this Trip Comment?";
+        StateHasChanged();
+    }
+
+}

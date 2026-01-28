@@ -1,0 +1,81 @@
+﻿@page "/trip/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject ITripRepository tripRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col"></div>
+    <div class="col-8 ">
+        <HeadingC Text="Add Trip" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-3">
+    <div class="col"></div>
+    <div class="col-8">
+        <EditForm Model="Trip" OnValidSubmit="AddTrip">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <InputText @bind-Value="Trip.Title" class="form-control"></InputText>
+                        <ValidationMessage For="() => Trip.Title"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group ">
+                        <label>Trip Year</label>
+                        <InputNumber @bind-Value="Trip.YearInt" class="form-control"></InputNumber>
+                        <ValidationMessage For="() => Trip.YearInt"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col">
+                    <SelectMonStrC vLabel="Trip Month" @bind-VMonStr="Trip.MonStr" />
+                </div>
+                <div class="col">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col text-center">
+                    <div class="form-group pt-3">
+                        <button class="btnAdd">Add Trip</button>
+                        <a href="trips" class="btnReturn">Return</a>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="alertInfo">
+                        <p>
+                            When completing the Add Trip, a partial completion, you
+                            will be directed to the Update Trip page to complete the Trip.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    private TripCreateDTO Trip { get; set; } = new TripCreateDTO();
+    public bool IsLoading { get; set; } = true;
+
+    private async Task AddTrip()
+    {
+        var response = await tripRepository.CreateTrip(Trip);
+        if (response.Substring(0, 2) == "id")
+        {
+            navManager.NavigateTo($"trip/edit/{response.Substring(3)}");
+        }
+    }
+}

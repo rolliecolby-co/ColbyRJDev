@@ -1,0 +1,107 @@
+﻿@page "/photoAlbumPhotos/{photoAlbumId:int}"
+
+@layout EditLayout
+@inject IPhotoAlbumRepository photoAlbumRepository
+@inject IPhotoAlbumPhotoRepository photoAlbumPhotoRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="PhotoAlbum Photos: Caption - Photo - Order # - When" />
+    </div>
+    <div class="col text-center">
+        <a href="photoAlbum/edit/@PhotoAlbumId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (PhotoAlbum != null && Photos != null && Photos.Any())
+{
+    <div class="row ">
+        <div class="col-3 text-center">
+            Grouped By: @PhotoAlbum.GroupedBy
+        </div>
+        <div class="col-3 text-center">
+            PhotoAlbum: <b>@PhotoAlbum.Title</b>
+        </div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in Photos)
+        {
+            <div class="col-4">
+                <div class="photoCard">
+                    <div class="photoCaption text-center">
+                        @item.Caption
+                    </div>
+                    <div class="photoBody text-center">
+                        <img src="@item.PhotoUrl" class="img-fluid photoBorder" />
+                    </div>
+                    <div class="photoFooter">
+                        <div class="row">
+                            <div class="col text-center">
+                                @item.OrderBy
+                            </div>
+                            <div class="col text-center">
+                                @item.PhotoDateStr
+                            </div>
+                            <div class="col text-end">
+                                <a href="@($"photoAlbumPhoto/edit/{item.Id}")" class="btnEdit">Edit</a>
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeletePhotoAlbumPhotoDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int PhotoAlbumId { get; set; }
+    private PhotoAlbumDTO PhotoAlbum { get; set; } = new PhotoAlbumDTO();
+    List<PhotoAlbumPhotoDTO> Photos { get; set; } = new List<PhotoAlbumPhotoDTO>();
+    private int DeletePhotoAlbumPhotoId { get; set; } = 0;
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var photoAlbum = await photoAlbumRepository.GetPhotoAlbum(PhotoAlbumId);
+        PhotoAlbum = photoAlbum;
+
+        await LoadPhotoAlbumPhotos();
+        StateHasChanged();
+    }
+
+    private async Task LoadPhotoAlbumPhotos()
+    {
+        var photos = await photoAlbumPhotoRepository.GetPhotos(PhotoAlbumId);
+        Photos = photos.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await photoAlbumPhotoRepository.Delete(DeletePhotoAlbumPhotoId);
+            DeleteDialogOpen = false;
+            await LoadPhotoAlbumPhotos();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeletePhotoAlbumPhotoDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeletePhotoAlbumPhotoId = id;
+        Text = "Do you want to delete this PhotoAlbum Photo?";
+        StateHasChanged();
+    }
+
+}

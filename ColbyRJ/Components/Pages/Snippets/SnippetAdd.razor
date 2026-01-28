@@ -1,0 +1,81 @@
+﻿@page "/snippet/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject ISnippetRepository snippetRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col"></div>
+    <div class="col-6 ">
+        <HeadingC Text="Add Snippet" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-3">
+    <div class="col"></div>
+    <div class="col-6">
+        <EditForm Model="Snippet" OnValidSubmit="AddSnippet">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <InputText @bind-Value="Snippet.Title" class="form-control"></InputText>
+                        <ValidationMessage For="() => Snippet.Title"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group ">
+                        <label>Snippet Year</label>
+                        <InputNumber @bind-Value="Snippet.YearInt" class="form-control"></InputNumber>
+                        <ValidationMessage For="() => Snippet.YearInt"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col">
+                    <SelectMonStrC vLabel="Snippet Month" @bind-VMonStr="@Snippet.MonStr" />
+                </div>
+                <div class="col">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col text-center">
+                    <div class="form-group pt-3">
+                        <button class="btnAdd">Add Snippet</button>
+                        <a href="snippets" class="btnReturn">Return</a>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="alertInfo">
+                        <p>
+                            When completing the Add Snippet, a partial completion, you
+                            will be directed to the Update Snippet page to complete the Snippet.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    private SnippetCreateDTO Snippet { get; set; } = new SnippetCreateDTO();
+    public bool IsLoading { get; set; } = true;
+
+    private async Task AddSnippet()
+    {
+        var response = await snippetRepository.Create(Snippet);
+        if (response.Substring(0, 2) == "id")
+        {
+            navManager.NavigateTo($"snippet/edit/{response.Substring(3)}");
+        }
+    }
+}

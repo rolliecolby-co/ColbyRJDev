@@ -1,0 +1,61 @@
+﻿@page "/phoneUnit/{id:int}"
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IUnitRepository unitRepository
+@inject IMapper mapper
+@attribute [Authorize]
+
+<div class="">
+    <HeadingC Text="Military Unit" />
+</div>
+<div class="text-center mt-2 pb-2">
+    <a href="phoneUnits" class="pBtnReturn">Return</a>
+</div>
+
+<div class="viewDiv">
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">@Unit.StartDateStr</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5>@Unit.MilitaryUnit</h5>
+        <h5>@Unit.UnitLocation</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">For Whom: @Unit.Who</h5>
+    </div>
+
+    @if (Unit.Remarks.Length > 10)
+    {
+        <div class="divItem mt-1">
+            @((MarkupString)remarks)
+        </div>
+    }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+        <ViewPhoneCommentsC Comments="Comments" />
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private UnitDTO Unit { get; set; } = new UnitDTO();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string title { get; set; }
+    string remarks = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var unit = await unitRepository.GetUnit(Id);
+        Unit = unit;
+        if (Unit.Comments != null && Unit.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<UnitCommentDTO>, List<CommentDTO>>(Unit.Comments.ToList());
+            Comments = comments.ToList();
+        }
+        remarks = Unit.Remarks;
+        remarks = remarks.Replace("<p>newColumn</p>", "");
+    }
+}

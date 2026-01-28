@@ -1,0 +1,259 @@
+﻿@page "/whoAmIs"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IWhoAmIRepository whoAmIRepository
+@inject IWhoAmICommentRepository commentRepository
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IAppUserRepository appUserRepository
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col mb-2 ">
+        <HeadingC Text="Owner / Who Am Is: Title - Order By - with Audio / Comments" />
+    </div>
+    <div class=" mb-2 text-center" style="width: 220px;">
+        <a href="whoAmI/add" class="btnAdd">Add New Who Am I</a>
+    </div>
+</div>
+
+@if (whoAmIs != null && whoAmIs.Any())
+{
+    ownerPrev = "zzz";
+    <div class="row mt-2">
+        <div class="col">
+            @*<SubHeadingC Text="Select an Owner" />*@
+            <div class="sectionHeader">
+                Select an Owner
+            </div>
+        </div>
+        <div class="col-md-9">
+            @foreach (var itemW in whoAmIs)
+            {
+                if (ownerPrev != itemW.Owner)
+                {
+                    var btnCSS = "";
+                    if (selectedOwner == itemW.Owner)
+                    {
+                        btnCSS = "selectedWho";
+                    }
+                    <span class="ms-3 mb-2">
+                        <button class="btnWho @btnCSS"
+                    onclick="@(() => SelectedWho(itemW.Owner))">
+                            @itemW.Owner
+                        </button>
+                    </span>
+                    ownerPrev = itemW.Owner;
+                    ownerEmail = itemW.OwnerEmail;
+                }
+            }
+        </div>
+    </div>
+}
+
+@if (SelectedWhoAmIs.Any())
+{
+    ownerPrev = "zzz";
+    @foreach (var itemW in SelectedWhoAmIs)
+    {
+        if (ownerPrev != itemW.Owner)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <div class="sectionHeader">
+                        <b>@itemW.Owner</b>
+                    </div>
+                </div>
+            </div>
+            ownerPrev = itemW.Owner;
+            ownerEmail = itemW.OwnerEmail;
+
+            <div class="row">
+                @foreach (var item in SelectedWhoAmIs)
+                {
+                    if (item.Owner == itemW.Owner)
+                    {
+                        <div class="col-6">
+                            <div class="editCard">
+                                <div class="editCardTitle">
+                                    @item.Title
+                                </div>
+                                <div class="editCardButtonRow">
+                                    <div class="row">
+                                        <div class="col">
+                                            <div class="text-center editCardButtons">
+                                                @item.OrderBy
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="text-center editCardButtons">
+                                                @item.WithAudio
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-center editCardButtons">
+                                                @if (userEmail == item.OwnerEmail || userRole == "Admin")
+                                                {
+                                                    <a href="@($"whoAmI/edit/{item.Id}")" class="btnEdit">Edit</a>
+                                                    <button type="button" class="btnDelete" onclick="@(() => OpenDeleteWhoAmIDialog(item.Id))">Delete</button>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="editCardRemarks">
+                                    @((MarkupString)item.Remarks)
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="row ">
+                        <div class="col-12 ps-3 pe-3">
+                            <div class="alertInfo">
+                                Comments for @itemW.Owner's Who Am I
+                            </div>
+                        </div>
+                        @foreach (var item in comments)
+                        {
+                            if (item.WhoAmIOwnerEmail == ownerEmail)
+                            {
+                                <div class="col-3">
+                                    <div class="editCard">
+                                        <div class="editCardTitle">
+                                            <div class="row">
+                                                <div class="col text-center">
+                                                    @item.CommentDate.ToString("M/d/yyyy")
+                                                </div>
+                                                <div class="col text-center">
+                                                    @item.Owner
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="editCardButtonRow">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <div class="text-center editCardButtons">
+                                                    </div>
+                                                </div>
+                                                <div class="col-8">
+                                                    <div class="text-center editCardButtons">
+                                                        <button type="button" class="btnDelete" onclick="@(() => OpenDeleteCommentDialog(item.Id))">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="editCardRemarks">
+                                            @((MarkupString)item.Comments)
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    private List<WhoAmIDTO> whoAmIs { get; set; } = new List<WhoAmIDTO>();
+    private List<WhoAmICommentDTO> comments { get; set; } = new List<WhoAmICommentDTO>();
+    public List<WhoAmIDTO> SelectedWhoAmIs = new List<WhoAmIDTO>();
+    private int DeleteWhoAmIId { get; set; } = 0;
+    private int DeleteCommentId { get; set; } = 0;
+    private string ownerPrev = "zzz";
+    private string ownerEmail = "";
+    private string selectedOwner = "";
+    private string SelectedOwnerEmail = "";
+
+    private string userEmail = "";
+    private string userRole = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWhoAmIs();
+        await LoadComments();
+
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var user = authstate.User;
+        userEmail = user.Identity.Name;
+        var appUser = await appUserRepository.GetUserByEmail(userEmail);
+        if (appUser != null)
+        {
+            userRole = appUser.Role;
+        }
+    }
+
+    private async Task LoadWhoAmIs()
+    {
+        var tWhoAmIs = await whoAmIRepository.GetWhoAmIs();
+        whoAmIs = tWhoAmIs.ToList();
+    }
+
+    private async Task LoadComments()
+    {
+        var tComments = await commentRepository.GetAllComments();
+        comments = tComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            if (DeleteWhoAmIId > 0)
+            {
+                await whoAmIRepository.Delete(DeleteWhoAmIId);
+            }
+            if (DeleteCommentId > 0)
+            {
+                await commentRepository.Delete(DeleteCommentId);
+            }
+            DeleteDialogOpen = false;
+            await LoadWhoAmIs();
+            await LoadComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteWhoAmIDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteWhoAmIId = id;
+        DeleteCommentId = 0;
+        Text = "Do you want to delete this Who Am I?";
+        StateHasChanged();
+    }
+
+    private void OpenDeleteCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteWhoAmIId = 0;
+        DeleteCommentId = id;
+        Text = "Do you want to delete this Who Am I Comment?";
+        StateHasChanged();
+    }
+
+    private void SelectedWho(string owner)
+    {
+        selectedOwner = owner;
+
+        SelectedWhoAmIs = whoAmIs.Where(q => q.Owner == owner).ToList();
+
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,66 @@
+﻿@page "/whoAmI/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IWhoAmIRepository whoAmIRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row ">
+    <div class="col"></div>
+    <div class="col-8 ">
+        <HeadingC Text="Add Who Am I" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-3">
+    <div class="col"></div>
+    <div class="col-8">
+        <EditForm Model="WhoAmI" OnValidSubmit="AddWhoAmI">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <InputText @bind-Value="WhoAmI.Title" class="form-control"></InputText>
+                        <ValidationMessage For="() => WhoAmI.Title"></ValidationMessage>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Order #</label>
+                        <InputNumber @bind-Value="WhoAmI.OrderBy" class="form-control"></InputNumber>
+                    </div>
+                    <div class="form-group mt-3 text-center">
+                        <button class="btnAdd">Add Who Am I</button>
+                        <a href="whoAmIs" class="btnReturn">Return</a>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label><b>Remarks</b></label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@WhoAmI.Remarks" Height="500px" />
+                        <ValidationMessage For="() => WhoAmI.Remarks"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    private WhoAmIDTO WhoAmI { get; set; } = new WhoAmIDTO();
+    public bool IsLoading { get; set; } = true;
+
+    private async Task AddWhoAmI()
+    {
+        var response = await whoAmIRepository.Create(WhoAmI);
+        if (response.Substring(0, 2) == "id")
+        {
+            navManager.NavigateTo("whoAmIs");
+        }
+    }
+}

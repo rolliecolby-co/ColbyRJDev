@@ -1,0 +1,61 @@
+﻿@page "/phoneJob/{id:int}"
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IJobRepository jobRepository
+@inject IMapper mapper
+@attribute [Authorize]
+
+<div class="">
+    <HeadingC Text="Job" />
+</div>
+<div class="text-center mt-2 pb-2">
+    <a href="phoneJobs" class="pBtnReturn">Return</a>
+</div>
+
+<div class="viewDiv">
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">@Job.StartDateStr</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5>Employer: @Job.Employer</h5>
+        <h5>Position: @Job.Position</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">For Whom: @Job.Who</h5>
+    </div>
+
+    @if (Job.Remarks.Length > 10)
+    {
+        <div class="divItem mt-1">
+            @((MarkupString)remarks)
+        </div>
+    }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+        <ViewPhoneCommentsC Comments="Comments" />
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private JobDTO Job { get; set; } = new JobDTO();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string remarks = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var job = await jobRepository.GetJob(Id);
+        Job = job;
+        if (Job.Comments != null && Job.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<JobCommentDTO>, List<CommentDTO>>(Job.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        remarks = Job.Remarks;
+        remarks = remarks.Replace("<p>newColumn</p>", "");
+    }
+}

@@ -1,0 +1,237 @@
+﻿@page "/photoFolder/{key}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IPhotoFolderRepository photoFolderRepository
+@inject IMapper mapper
+
+<div class="viewHeader">
+    <div class="row mt-3 mb-1">
+        <div class="col-9 mb-2 ps-4">
+            <HeadingC Text="Photo Folder" />
+        </div>
+        <div class="col text-center">
+            <button class="btnClose mx-2 mt-1" @onclick="@(e => OnButtonClick("close"))">Close Tab</button>
+            <AuthorizeView>
+                <a href="photoFolderComment/add/@PhotoFolder.Id" class="btnAdd mx-2 mt-1">Add Comment</a>
+            </AuthorizeView>
+        </div>
+    </div>
+</div>
+
+<div class="viewDiv">
+    <div class="row">
+        <div class="col text-center">
+            <div class="divItem">
+                <h5 class="mt-1">@PhotoFolder.YearMonth</h5>
+            </div>
+        </div>
+        <div class="col-6 text-center">
+            <div class="divItem">
+                <h5>@PhotoFolder.Title</h5>
+            </div>
+        </div>
+        <div class="col text-center">
+            <div class="divItem">
+                <h5 class="mt-1">Owner: @PhotoFolder.Owner</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        @if (!hideBody)
+        {
+            <div class="col text-center">
+                @if (Comments != null && Comments.Count > 0 && showComments == false)
+                {
+                    <button type="button" @onclick="() => ShowComments()" class="btnShow">Show Comments</button>
+                }
+            </div>
+        }
+
+        <div class="col text-center">
+            @if (photoSize != "thumbnail")
+            {
+                <button class="btnGroup" onclick="@(() => SetView("thumbnail"))">
+                    Thumbnails
+                </button>
+            }
+        </div>
+        <div class="col text-center">
+            @if (photoSize != "small")
+            {
+                <button class="btnGroup" onclick="@(() => SetView("small"))">
+                    Small Photos
+                </button>
+            }
+        </div>
+        <div class="col text-center">
+            @if (photoSize != "medium")
+            {
+                <button class="btnGroup" onclick="@(() => SetView("medium"))">
+                    Medium Photos
+                </button>
+            }
+        </div>
+        <div class="col text-center">
+            @if (photoSize != "large")
+            {
+                <button class="btnGroup" onclick="@(() => SetView("large"))">
+                    Large Photos
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        @if (!hideBody)
+        {
+            <div class="col">
+                <div class="divItem">
+                    @((MarkupString)bodyCol1)
+                </div>
+            </div>
+            @if (bodyCol2.Length > 0)
+            {
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol2)
+                    </div>
+                </div>
+            }
+            @if (bodyCol3.Length > 0)
+            {
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol3)
+                    </div>
+                </div>
+            }
+        }
+
+        <div class="col">
+            <div class="">
+                @if (!hideBody && PathFolder != null)
+                {
+                    <div class="row">
+                        <div class="col">
+                            <PFShowPhotosC PathFolder="@PathFolder" PhotoSize="thumbnail" />
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (photoSize != "thumbnail")
+{
+    <div class="viewDiv">
+        <div class="row">
+            <div class="col">
+                @if (photoSize == "small")
+                {
+                    <PFShowPhotosC PathFolder="@PathFolder" PhotoSize="small" ShowFilename="@ShowFilenames" />
+                }
+                else if (photoSize == "medium")
+                {
+                    <PFShowPhotosC PathFolder="@PathFolder" PhotoSize="medium" ShowFilename="@ShowFilenames" />
+                }
+                else if (photoSize == "large")
+                {
+                    <PFShowPhotosC PathFolder="@PathFolder" PhotoSize="large" ShowFilename="@ShowFilenames" />
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if (Comments.Count > 0 && showComments && showComments)
+{
+    <ViewCommentsC Comments="@Comments" />
+}
+
+@code {
+    [Parameter] public string Key { get; set; }
+    public string PathFolder { get; set; }
+    private PhotoFolderDTO PhotoFolder { get; set; } = new PhotoFolderDTO();
+    string title { get; set; }
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    bool hideBody = false;
+    string photoSize = "thumbnail";
+    string bodyCol1 = "";
+    string bodyCol2 = "";
+    string bodyCol3 = "";
+    bool showComments = false;
+    bool ShowFilenames = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var photoFolder = await photoFolderRepository.GetPhotoFolderByKey(Key);
+        PhotoFolder = photoFolder;
+        PathFolder = PhotoFolder.PathFolder;
+        ShowFilenames = PhotoFolder.ShowFilename;
+
+        if (PhotoFolder.Comments != null && PhotoFolder.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<PhotoFolderCommentDTO>, List<CommentDTO>>(PhotoFolder.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        photoSize = "thumbnail";
+
+        if (PhotoFolder.Remarks.Length > 10)
+        {
+            bodyCol1 = PhotoFolder.Remarks;
+            string[] cols = bodyCol1.Split("<p>newColumn</p>");
+
+            int colNum = 0;
+            foreach (var aCol in cols)
+            {
+                colNum++;
+                if (colNum == 1)
+                {
+                    bodyCol1 = aCol;
+                }
+                if (colNum == 2)
+                {
+                    bodyCol2 = aCol;
+                }
+                if (colNum == 3)
+                {
+                    bodyCol3 = aCol;
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnButtonClick(string value)
+    {
+        JS.InvokeVoidAsync($"window.{value}");
+    }
+
+    private async Task SetView(string viewStr)
+    {
+        photoSize = viewStr;
+        showComments = false;
+        if (photoSize == "thumbnail")
+        {
+            hideBody = false;
+        }
+        else
+        {
+            hideBody = true;
+        }
+        StateHasChanged();
+    }
+
+    private void ShowComments()
+    {
+        showComments = true;
+        StateHasChanged();
+    }
+}

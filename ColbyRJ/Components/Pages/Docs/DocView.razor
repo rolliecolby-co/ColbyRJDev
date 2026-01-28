@@ -1,0 +1,258 @@
+﻿@page "/doc/{key}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IDocRepository docRepository
+@inject IMapper mapper
+
+<div class="viewHeader">
+    <div class="row mt-3 mb-1">
+        <div class="col-9 mb-2 ps-4">
+            <HeadingC Text="Document" />
+        </div>
+        <div class="col text-center">
+            <button class="btnClose mx-2 mt-1" @onclick="@(e => OnButtonClick("close"))">Close Tab</button>
+            <AuthorizeView>
+                <a href="docComment/add/@Doc.Id" class="btnAdd mx-2 mt-1">Add Comment</a>
+            </AuthorizeView>
+        </div>
+    </div>
+</div>
+
+<div class="viewDiv">
+    <div class="row">
+        <div class="col text-center">
+            <div class="divItem">
+                <h5 class="mt-1">@Doc.YearMonth</h5>
+            </div>
+        </div>
+        <div class="col-6 text-center">
+            <div class="divItem">
+                <h5>@Doc.Title</h5>
+            </div>
+        </div>
+        <div class="col text-center">
+            <div class="divItem">
+                <h5 class="mt-1">Owner: @Doc.Owner</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        @if (!hideBody)
+        {
+            <div class="col text-center">
+                @if (Comments != null && Comments.Count > 0 && showComments == false)
+                {
+                    <button type="button" @onclick="() => ShowComments()" class="btnShow">Show Comments</button>
+                }
+            </div>
+        }
+
+        <div class="col text-center">
+            @if (hideBody)
+            {
+                <button class="btnGroup" onclick="@(() => SetView("small"))">
+                    Small Pdfs
+                </button>
+            }
+        </div>
+        <div class="col text-center">
+            @if (pdfSize != "medium")
+            {
+                <button class="btnGroup" onclick="@(() => SetView("medium"))">
+                    Medium Pdfs
+                </button>
+            }
+        </div>
+        <div class="col text-center">
+            @if (pdfSize != "large")
+            {
+                <button class="btnGroup" onclick="@(() => SetView("large"))">
+                    Large Pdfs
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        @if (!hideBody)
+        {
+            <div class="col">
+                <div class="divItem">
+                    @((MarkupString)bodyCol1)
+                </div>
+            </div>
+            @if (bodyCol2.Length > 0)
+            {
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol2)
+                    </div>
+                </div>
+            }
+            @if (bodyCol3.Length > 0)
+            {
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol3)
+                    </div>
+                </div>
+            }
+        }
+
+        <div class="col">
+            @if (Doc.Pdfs != null && Doc.Pdfs.Count > 0)
+            {
+                <div class="">
+                    @if (!hideBody)
+                    {
+                        <div class="row">
+                            @foreach (var item in Doc.Pdfs)
+                            {
+                                <div class="@pdfColClass mt-2">
+                                    <div class="viewPdfCard">
+                                        @if (item.Title.Length > 1 || item.PdfDateStr.Length > 1)
+                                        {
+                                            <div class="row mt-2 mb-2">
+                                                <div class="col">
+                                                    <div class="text-center">
+                                                        @item.PdfDateStr
+                                                    </div>
+                                                </div>
+                                                <div class="col">
+                                                    <div class="text-center">
+                                                        <h5>@item.Title</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        <div>
+                                            <embed src="@item.PdfUrl" style="width: 100%; height: 700px;" />
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+    
+    @if (pdfSize == "medium" || pdfSize == "large")
+    {
+        <div class="row mt-2">
+            <ViewPdfsC Pdfs="@Pdfs" PdfSize="@pdfSize" />
+        </div>
+    }
+
+    @if (Comments != null && Comments.Count > 0 && showComments)
+    {
+        <ViewCommentsC Comments="Comments" />
+    }
+</div>
+
+
+@code {
+    [Parameter] public string Key { get; set; }
+    private DocDTO Doc { get; set; } = new DocDTO();
+    public List<PdfDTO> Pdfs = new List<PdfDTO>();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string title { get; set; }
+    string pdfColClass = "col-6";
+    bool showComments = false;
+    bool hideBody = false;
+    string pdfSize = "";
+    string bodyCol1 = "";
+    string bodyCol2 = "";
+    string bodyCol3 = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var doc = await docRepository.GetDocByKey(Key);
+        Doc = doc;
+        if (Doc.Comments != null && Doc.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<DocCommentDTO>, List<CommentDTO>>(Doc.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        if (Doc.Remarks.Length < 10)
+        {
+            pdfColClass = "col-6";
+        }
+
+        if (Doc.Remarks.Length > 10)
+        {
+            bodyCol1 = Doc.Remarks;
+            string[] cols = bodyCol1.Split("<p>newColumn</p>");
+
+            int colNum = 0;
+            foreach (var aCol in cols)
+            {
+                colNum++;
+                if (colNum == 1)
+                {
+                    bodyCol1 = aCol;
+                    pdfColClass = "col-6";
+                }
+                if (colNum == 2)
+                {
+                    bodyCol2 = aCol;
+                    pdfColClass = "col-6";
+                }
+                if (colNum == 3)
+                {
+                    bodyCol3 = aCol;
+                    pdfColClass = "col-12";
+                }
+            }
+        }
+
+        if (Doc.Pdfs != null)
+        {
+            foreach (var vPdf in Doc.Pdfs)
+            {
+                var pdf = new PdfDTO
+                    {
+                        Title = vPdf.Title,
+                        OrderBy = vPdf.OrderBy,
+                        PdfDate = vPdf.PdfDate,
+                        PdfDateStr = vPdf.PdfDateStr,
+                        PdfUrl = vPdf.PdfUrl
+                    };
+
+                Pdfs.Add(pdf);
+            }
+        }
+    }
+
+    private void OnButtonClick(string value)
+    {
+        JS.InvokeVoidAsync($"window.{value}");
+    }
+
+    private void ShowComments()
+    {
+        showComments = true;
+        StateHasChanged();
+    }
+
+    private async Task SetView(string viewStr)
+    {
+        pdfSize = viewStr;
+        showComments = false;
+        if (pdfSize == "small")
+        {
+            hideBody = false;
+        }
+        else
+        {
+            hideBody = true;
+        }
+        StateHasChanged();
+    }
+}

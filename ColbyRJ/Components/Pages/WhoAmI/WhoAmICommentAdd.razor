@@ -1,0 +1,66 @@
+﻿@page "/whoAmIComment/add/{owner}"
+@rendermode InteractiveServer
+
+@layout ViewLayout
+
+@inject IWhoAmIRepository whoAmIRepository
+@inject IWhoAmICommentRepository whoAmICommentRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col"></div>
+    <div class="col-6">
+        <HeadingC Text="Add Who Am I Comment" />
+
+        <div class="row mt-2">
+            <div class="col text-center">
+            </div>
+            <div class="col text-center">
+                Who Am I Owner: <b>@WhoAmI.Owner</b>
+            </div>
+        </div>
+
+        <EditForm Model="Comment" OnValidSubmit="AddComment">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group">
+                        <label><b>Your Comment</b></label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@Comment.Comments" Height="500px" />
+                        <ValidationMessage For="@(() => Comment.Comments)" />
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="form-group text-center mt-5">
+                        <button class="btnAdd">Add Comment</button>
+                        <br /><br />
+                        <a href="browseWhoAmI" class="btnReturn">Return</a>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+@code {
+    [Parameter] public string Owner { get; set; }
+    private WhoAmIDTO WhoAmI { get; set; } = new WhoAmIDTO();
+    private WhoAmICommentDTO Comment { get; set; } = new WhoAmICommentDTO();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var whoAmI = await whoAmIRepository.GetWhoAmIByOwner(Owner);
+        WhoAmI = whoAmI;
+        Comment.WhoAmIOwner = WhoAmI.Owner;
+        Comment.WhoAmIOwnerEmail = WhoAmI.OwnerEmail;
+    }
+
+    private async Task AddComment()
+    {
+        var newCommentResult = await whoAmICommentRepository.Create(Comment);
+        navManager.NavigateTo($"browseWhoAmI");
+    }
+}
+

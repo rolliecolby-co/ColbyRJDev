@@ -1,0 +1,69 @@
+﻿@page "/phonePhotoFolder/{key}"
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IPhotoFolderRepository photoFolderRepository
+@inject IMapper mapper
+
+@if (PathFolder != null)
+{
+    <div class="">
+        <HeadingC Text="Photo Folder" />
+    </div>
+    <div class="text-center mt-2 pb-2">
+        <a href="phonePhotoFolders" class="pBtnReturn">Return</a>
+    </div>
+
+    <div class="viewDiv">
+        <div class="divItem mt-2 text-center">
+            <h5 class="mt-1">@PhotoFolder.YearMonth</h5>
+        </div>
+        <div class="divItem mt-2 text-center">
+            <h5>@PhotoFolder.Title</h5>
+        </div>
+        <div class="divItem mt-2 text-center">
+            <h5 class="mt-1">Owner: @PhotoFolder.Owner</h5>
+        </div>
+
+        <div class="divItem mt-1">
+            @((MarkupString)remarks)
+        </div>
+
+        <div class="mt-2">
+            <PFShowPhotosC PathFolder="@PathFolder" PhotoSize="large" ShowFilename="@ShowFilenames" />
+        </div>
+
+        @if (Comments != null && Comments.Count > 0)
+        {
+            <ViewPhoneCommentsC Comments="Comments" />
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Key { get; set; }
+    public string PathFolder { get; set; }
+    private PhotoFolderDTO PhotoFolder { get; set; } = new PhotoFolderDTO();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    bool ShowFilenames = false;
+    string remarks = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var photoFolder = await photoFolderRepository.GetPhotoFolderByKey(Key);
+        PhotoFolder = photoFolder;
+        PathFolder = PhotoFolder.PathFolder;
+        ShowFilenames = PhotoFolder.ShowFilename;
+
+        if (PhotoFolder.Comments != null && PhotoFolder.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<PhotoFolderCommentDTO>, List<CommentDTO>>(PhotoFolder.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        remarks = PhotoFolder.Remarks;
+        remarks = remarks.Replace("<p>newColumn</p>", "");
+        StateHasChanged();
+    }
+}

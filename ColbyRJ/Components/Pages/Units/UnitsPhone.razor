@@ -1,0 +1,77 @@
+﻿@page "/phoneUnits"
+@rendermode InteractiveServer
+
+@layout PhoneLayout
+
+@inject IUnitRepository unitRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="">
+    <HeadingC Text="Military Units" />
+</div>
+<div class="mt-2">
+    @if (who != null && who.Count > 0)
+    {
+        <select value="@selectedWho" class="form-select" @onchange="OnWhoChanged">
+            <option value="">-- Select For Whom --</option>
+            @foreach (var item in who)
+            {
+                <option value="@item">@item</option>
+            }
+        </select>
+    }
+</div>
+
+@if (units != null && units.Count > 0)
+{
+    <div class="mt-2">
+        <RadzenDataGrid Data="@units" TItem="UnitDTO"
+                        PagerHorizontalAlign="HorizontalAlign.Center">
+            <Columns>
+                <RadzenDataGridColumn Property="YearMonth" Title="Year Month" Width="110px"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="UnitLocationStr" Title="Unit Location" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Id" Width="80px" TextAlign="TextAlign.Center"
+                                      HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        @{
+                            var link = "phoneUnit/" + data.Id;
+                        }
+                        <RadzenLink Path=@link Text="View" Target="_unit" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+}
+
+@code {
+    private List<UnitDTO> units;
+    private List<UnitDTO> allUnits;
+    private List<string> who;
+    string selectedWho = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUnits();
+
+        var tWho = allUnits.OrderBy(q => q.Who).Select(q => q.Who).ToList();
+        who = tWho.AsQueryable().Distinct().ToList();
+    }
+
+    private async Task LoadUnits()
+    {
+        var tUnits = await unitRepository.GetBrowseUnits();
+        allUnits = tUnits.ToList();
+    }
+
+    private void OnWhoChanged(ChangeEventArgs e)
+    {
+        selectedWho = e.Value.ToString();
+
+        units = allUnits.Where(q => q.Who == selectedWho).ToList();
+        StateHasChanged();
+    }
+}

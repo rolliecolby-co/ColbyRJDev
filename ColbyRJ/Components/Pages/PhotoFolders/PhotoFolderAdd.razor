@@ -1,0 +1,81 @@
+﻿@page "/photoFolder/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IPhotoFolderRepository photoFolderRepository
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row ">
+    <div class="col"></div>
+    <div class="col-6 ">
+        <HeadingC Text="Add Photo Folder" />
+    </div>
+    <div class="col"></div>
+</div>
+
+<div class="row mt-3">
+    <div class="col"></div>
+    <div class="col-6">
+        <EditForm Model="PhotoFolder" OnValidSubmit="AddPhotoFolder">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <InputText @bind-Value="PhotoFolder.Title" class="form-control"></InputText>
+                        <ValidationMessage For="() => PhotoFolder.Title"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <div class="form-group ">
+                        <label>Photo Folder Year</label>
+                        <InputNumber @bind-Value="PhotoFolder.YearInt" class="form-control"></InputNumber>
+                        <ValidationMessage For="() => PhotoFolder.YearInt"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="col">
+                    <SelectMonStrC vLabel="Photo Folder Month" @bind-VMonStr="@PhotoFolder.MonStr" />     
+                </div>
+                <div class="col">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col text-center">
+                    <div class="form-group pt-3">
+                        <button class="btnAdd">Add Photo Folder</button>
+                        <a href="photoFolders" class="btnReturn">Return</a>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="alertInfo">
+                        <p>
+                            When completing the Add Photo Folder, a partial completion, you
+                            will be directed to the Update Photo Folder page to complete the Photo Folder.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </EditForm>
+    </div>
+    <div class="col"></div>
+</div>
+
+@code {
+    private PhotoFolderCreateDTO PhotoFolder { get; set; } = new PhotoFolderCreateDTO();
+    public bool IsLoading { get; set; } = true;
+
+    private async Task AddPhotoFolder()
+    {
+        var response = await photoFolderRepository.Create(PhotoFolder);
+        if (response.Substring(0, 2) == "id")
+        {
+            navManager.NavigateTo($"photoFolder/edit/{response.Substring(3)}");
+        }
+    }
+}

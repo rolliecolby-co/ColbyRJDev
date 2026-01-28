@@ -1,0 +1,109 @@
+﻿@page "/browse"
+
+@layout BrowseLayout
+
+@inject BrowserService _service
+@inject IHintRepository hintRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<PageTitle>Colby Family Memories</PageTitle>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="text-center">
+            <h2>Colby Family Memories</h2>
+        </div>
+        <div class="mt-2">
+            <div class="browsePanel">
+                <div class="text-center mt-2">
+                    <h4>Audio Welcome</h4>
+                    <div>
+                        <audio controls="controls"><source src="inc/welcome.mp3" /></audio>
+                    </div>
+                </div>
+                @if (leftHints != null && leftHints.Count > 0)
+                {
+                    var count = 1;
+                    foreach (var item in leftHints)
+                    {
+                        if (count == 1)
+                        {
+                            <CollapsableC Title="@item.Title" Collapsed="false">
+                                @((MarkupString)@item.Value)
+                            </CollapsableC>
+                        }
+                        else
+                        {
+                            <CollapsableC Title="@item.Title" Collapsed="true">
+                                @((MarkupString)@item.Value)
+                            </CollapsableC>
+                        }
+                        count++;
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div>
+            <img src="images/momdadfourcorners1975.png" class="img-fluid browsePhoto" />
+        </div>
+
+    </div>
+    <div class="col-md-4">
+        <div class="browsePanel">
+            @if (rightHints != null && rightHints.Count > 0)
+            {
+                var count = 1;
+                foreach (var item in rightHints)
+                {
+                    if (count == 1)
+                    {
+                        <CollapsableC Title="@item.Title" Collapsed="false">
+                            @((MarkupString)@item.Value)
+                        </CollapsableC>
+                    }
+                    else
+                    {
+                        <CollapsableC Title="@item.Title" Collapsed="true">
+                            @((MarkupString)@item.Value)
+                        </CollapsableC>
+                    }
+                    count++;
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<HintDTO> leftHints;
+    private List<HintDTO> rightHints;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHints();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var dimension = await _service.GetDimensions();
+            if (dimension.Width < 950)
+            {
+                navManager.NavigateTo($"/phone");
+            }
+        }
+    }
+
+    private async Task LoadHints()
+    {
+        var result = await hintRepository.GetHintsByKey("BL");
+        leftHints = result.ToList();
+
+        var result2 = await hintRepository.GetHintsByKey("BR");
+        rightHints = result2.ToList();
+    }
+}

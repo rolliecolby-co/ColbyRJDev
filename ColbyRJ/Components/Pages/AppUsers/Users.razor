@@ -1,0 +1,109 @@
+﻿@page "/users"
+@rendermode InteractiveServer
+
+@layout AdminLayout
+
+@inject IAppUserRepository userRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row ">
+    <div class="col">
+        <HeadingC Text="Users" />
+    </div>
+    <div class="mb-2 mb-2 text-center" style="width: 220px;">
+        <a href="user/add" class="btnAdd">Add User</a>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col">
+        <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@users" TItem="AppUserDTO"
+                        PagerHorizontalAlign="HorizontalAlign.Center">
+            <Columns>
+                <RadzenDataGridColumn Property="Name" Title="Name" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="DisplayName" Title="Display Name" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Email" Title="Email" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="MobilePhoneDisplay" Title="Mobile Phone" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Role" Title="User Role" Width="100px"
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+
+                <RadzenDataGridColumn Property="Id" Width="70px" TextAlign="TextAlign.Center"
+                                      HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        @{
+                            var link = "user/edit/" + data.Id;
+                        }
+                        <RadzenLink Path=@link Text="Edit" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="Id" Width="70px" HeaderCssClass="rz-background-color-info-lighter">
+                    <Template Context="data">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Icon="delete" class="m-1"
+                                      Click=@(() => DeleteUser(data.Id)) />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+</div>
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+
+@code {
+    private List<AppUserDTO> users;
+    string selectedId = "";
+    public bool IsLoading { get; set; }
+    private int DeleteUserId { get; set; } = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        var tUsers = await userRepository.GetUsers();
+        users = tUsers.ToList();
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    async Task DeleteUser(int Id)
+    {
+        var item = users.FirstOrDefault(Query => Query.Id == Id);
+        OpenDeleteUserDialog(Id, item.Name);
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await userRepository.Delete(DeleteUserId);
+            DeleteDialogOpen = false;
+            await LoadUsers();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteUserDialog(int id, string name)
+    {
+        DeleteDialogOpen = true;
+        DeleteUserId = id;
+        Text = $"Do you want to delete this User ({@name})?";
+        StateHasChanged();
+    }
+}

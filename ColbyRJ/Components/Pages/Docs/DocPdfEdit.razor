@@ -1,0 +1,76 @@
+﻿@page "/docPdf/edit/{PdfId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IDocPdfRepository docPdfRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col">
+        <HeadingC Text="Edit Document PDF" />
+    </div>
+</div>
+
+ @if (Pdf != null && Pdf.Doc != null)
+{
+    <EditForm Model="Pdf" OnValidSubmit="UpdatePdf">
+        <DataAnnotationsValidator />
+
+        <div class="row mt-3">
+            <div class="col-4">
+                <div class="">
+                    <label>
+                        Grouped By / Doc
+                    </label>
+                    <div class="">
+                        <SubHeadingC Text="@docStr" />
+                    </div>
+                </div>
+                <div class="form-group mt-2">
+                    <label><b>Title</b></label>
+                    <InputText @bind-Value="Pdf.Title" class="form-control"></InputText>
+                </div>
+                <div class="form-group mt-2">
+                    <label>Order Number</label>
+                    <InputNumber @bind-Value="Pdf.OrderBy" class="form-control"></InputNumber>
+                </div>
+                <div class="form-group mt-2">
+                    <label>Pdf Date</label>
+                    <InputDate @bind-Value="Pdf.PdfDate" class="form-control"></InputDate>
+                </div>
+                <div class="form-group text-center mt-3">
+                    <button class="btnSave">Save</button>
+                    <a href="docPdfs/@Pdf.DocId" class="btnReturn">Return</a>
+                </div>
+            </div>
+            <div class="col">
+                <div class="pdf-edit">
+                    <embed src="@Pdf.PdfUrl" style="width: 100%; height: 700px;" />
+                </div>
+            </div>
+            <div class="col-2"></div>
+        </div>>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int PdfId { get; set; }
+    private DocPdfDTO Pdf { get; set; } = new DocPdfDTO();
+    string docStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var pdf = await docPdfRepository.GetPdf(PdfId);
+        Pdf = pdf;
+        docStr = Pdf.Doc.GroupedBy + " / " + Pdf.Doc.Title;
+        StateHasChanged();
+    }
+
+    private async Task UpdatePdf()
+    {
+        var updatePdfResult = await docPdfRepository.Update(Pdf);
+        navManager.NavigateTo($"docPdfs/{@Pdf.Doc.Id}");
+    }
+}

@@ -1,0 +1,21 @@
+﻿@page "/SendSatOptIn"
+
+@inject IOptInSendRepository OptInSendRepository
+
+<h3>Send Sat OptIn Email</h3>
+
+<div>
+    @foreach (var item in SendTos)
+    {
+        <h4>@item.SendToEmail</h4>
+    }
+</div>
+@code {
+    ICollection<OptInSendToDTO> SendTos { get; set; } = new List<OptInSendToDTO>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await OptInSendRepository.SendOptIn();
+        //SendTos = await OptInSendRepository.GetOptInSendTo();
+    }
+}

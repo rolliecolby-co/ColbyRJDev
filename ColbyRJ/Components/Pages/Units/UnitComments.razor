@@ -1,0 +1,108 @@
+﻿@page "/unitComments/{unitId:int}"
+
+@layout PostEditLayout
+
+
+@inject IUnitRepository unitRepository
+@inject IUnitCommentRepository unitCommentRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Unit Comments: Unit / Location - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="unit/edit/@UnitId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (unitComments != null && unitComments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-4 pt-2 text-center">
+            Unit / Location
+        </div>
+        <div class="col-6">
+            <SubHeadingC Text="@unitStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in unitComments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteUnitCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int UnitId { get; set; }
+    private UnitDTO Unit { get; set; } = new UnitDTO();
+    private List<UnitCommentDTO> unitComments { get; set; } = new List<UnitCommentDTO>();
+    private int DeleteUnitCommentId { get; set; } = 0;
+    string unitStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var unit = await unitRepository.GetUnit(UnitId);
+        Unit = unit;
+        unitStr = Unit.MilitaryUnit + " / " + Unit.UnitLocation;
+
+        await LoadUnitComments();
+    }
+
+    private async Task LoadUnitComments()
+    {
+        var vUnitComments = await unitCommentRepository.GetComments(UnitId);
+        unitComments = vUnitComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await unitCommentRepository.Delete(DeleteUnitCommentId);
+            DeleteDialogOpen = false;
+            await LoadUnitComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteUnitCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteUnitCommentId = id;
+        Text = "Do you want to delete this Unit Comment?";
+        StateHasChanged();
+    }
+
+}

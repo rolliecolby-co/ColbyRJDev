@@ -1,0 +1,108 @@
+﻿@page "/videoComments/{videoId:int}"
+
+@layout PostEditLayout
+
+
+@inject IVideoRepository videoRepository
+@inject IVideoCommentRepository videoCommentRepository
+@attribute [Authorize]
+
+<div class="row  mb-2 pt-2">
+    <div class="col-10">
+        <HeadingC Text="Video Comments: Title - Comment - Owner - When" />
+    </div>
+    <div class="col text-center">
+        <a href="video/edit/@VideoId" class="btnReturn">Return</a>
+    </div>
+</div>
+
+@if (videoComments != null && videoComments.Any())
+{
+    <div class="row ">
+        <div class="col"></div>
+        <div class="col-4 pt-2 text-center">
+            Grouped By / Video
+        </div>
+        <div class="col-6">
+            <SubHeadingC Text="@videoStr" />
+        </div>
+        <div class="col"></div>
+    </div>
+    <div class="row mt-3">
+        @foreach (var item in videoComments)
+        {
+            <div class="col-3">
+                <div class="commentCard">
+                    <div class="commentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                    <div class="commentFooter">
+                        <div class="row">
+                            <div class="col">
+                                @item.Owner
+                            </div>
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy")
+                            </div>
+                            <div class="col text-end">
+                                <button type="button" class="btnDelete btn-sm" onclick="@(() => OpenDeleteVideoCommentDialog(item.Id))">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (DeleteDialogOpen)
+{
+    <DeleteModalC Text="@Text" OnClose="@OnDeleteDialogClose" />
+}
+
+@code {
+    [Parameter] public int VideoId { get; set; }
+    private VideoDTO Video { get; set; } = new VideoDTO();
+    private List<VideoCommentDTO> videoComments { get; set; } = new List<VideoCommentDTO>();
+    private int DeleteVideoCommentId { get; set; } = 0;
+    string videoStr = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var video = await videoRepository.GetVideo(VideoId);
+        Video = video;
+        videoStr = Video.GroupedBy + " / " + Video.Title;
+
+        await LoadVideoComments();
+    }
+
+    private async Task LoadVideoComments()
+    {
+        var vVideoComments = await videoCommentRepository.GetComments(VideoId);
+        videoComments = vVideoComments.ToList();
+    }
+
+    public bool DeleteDialogOpen { get; set; }
+    public string Text { get; set; }
+
+    async Task OnDeleteDialogClose(bool accepted)
+    {
+        if (accepted)
+        {
+            await videoCommentRepository.Delete(DeleteVideoCommentId);
+            DeleteDialogOpen = false;
+            await LoadVideoComments();
+        }
+        DeleteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenDeleteVideoCommentDialog(int id)
+    {
+        DeleteDialogOpen = true;
+        DeleteVideoCommentId = id;
+        Text = "Do you want to delete this Video Comment?";
+        StateHasChanged();
+    }
+
+}

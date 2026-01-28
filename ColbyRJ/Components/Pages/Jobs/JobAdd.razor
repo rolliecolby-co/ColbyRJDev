@@ -1,0 +1,99 @@
+﻿@page "/job/add"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject IHttpContextAccessor httpContext
+@inject IJobRepository jobRepository
+@inject IAppUserRepository appUserRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <div class="col">
+    </div>
+    <div class="col-6">
+        <HeadingC Text="Add Job" />
+
+        <EditForm Model="@job" OnValidSubmit="AddJob">
+            <DataAnnotationsValidator />
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    @* <div class="form-group ">
+                    <label>For Whom</label>
+                    <InputSelect @bind-Value="@job.Who" class="form-select">
+                    <option value=0 selected>-- Select For Whom --</option>
+                    @foreach (var w in who)
+                    {
+                    <option value="@w.Who">@w.Who</option>
+                    }
+                    </InputSelect>
+                    <ValidationMessage For="() => job.Who"></ValidationMessage>
+                    </div>*@
+                    <div class="form-group mt-2">
+                        <div class="row mt-2">
+                            <div class="col">
+                                <div class="form-group ">
+                                    <label>Start Year</label>
+                                    <InputNumber @bind-Value="job.YearInt" class="form-control"></InputNumber>
+                                    <ValidationMessage For="() => job.YearInt"></ValidationMessage>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <SelectMonStrC vLabel="Start Month" @bind-VMonStr="@job.MonStr" />
+                            </div>
+                            <div class="col">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Employer</label>
+                        <div>
+                            <InputText @bind-Value="@job.Employer" class="form-control" />
+                            <ValidationMessage For="@(() => job.Employer)" />
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Position</label>
+                        <div>
+                            <InputText @bind-Value="@job.Position" class="form-control" />
+                            <ValidationMessage For="@(() => job.Position)" />
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label>Remarks</label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@job.Remarks" Height="250px" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <button type="submit" class="btnAdd">
+                    Add Job
+                </button>
+                <a href="jobs" class="btnReturn ms-3">Return</a>
+            </div>
+        </EditForm>
+    </div>
+    <div class="col">
+    </div>
+</div>
+
+@code {
+    JobDTO job = new JobDTO();
+    List<WhoDTO> who = new List<WhoDTO>();
+    public int jobId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var tWho = await appUserRepository.GetWho("ind");
+        who = tWho.ToList();
+    }
+
+    private async Task AddJob()
+    {
+        var addResult = await jobRepository.Create(job);
+        navManager.NavigateTo("jobs");
+    }
+}

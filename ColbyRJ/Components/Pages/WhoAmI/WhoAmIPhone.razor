@@ -1,0 +1,118 @@
+﻿@page "/phoneWhoAmI"
+@rendermode InteractiveServer
+
+@layout PhoneLayout
+
+@inject IWhoAmIRepository whoAmIRepository
+@inject IWhoAmICommentRepository whoAmICommentRepository
+
+@inject NavigationManager navManager
+@inject IMapper mapper
+@attribute [Authorize]
+
+<div class="">
+    <HeadingC Text="Who Am I" />
+</div>
+
+<div class="mt-2">
+    @if (owners != null && owners.Count > 0)
+    {
+        <select value="@selectedOwner" class="form-select" @onchange="OnOwnerChanged">
+            <option value="">-- Select an Owner --</option>
+            @foreach (var item in owners)
+            {
+                <option value="@item">@item</option>
+            }
+        </select>
+    }
+</div>
+
+@if (whoAmI != null && whoAmI.Count > 0)
+{
+        @foreach (var item in whoAmI)
+        {
+            <div class="mt-2">
+                <div class="editCard">
+                    <div class="editCardTitle">
+                        @item.Title
+                    </div>
+                    @if (item.AudioUrl.Length > 10)
+                    {
+                        <div class="mt-2 text-center">
+                            <div>
+                                <audio controls="controls"><source src="@item.AudioUrl" /></audio>
+                            </div>
+                        </div>
+                    }
+                    <div class="editCardRemarks">
+                        @((MarkupString)item.Remarks)
+                    </div>
+                </div>
+            </div>
+        }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+            @foreach (var item in Comments)
+            {
+                <div class="mt-2">
+                    <div class="viewCommentCard">
+                        <div class="row py-2">
+                            <div class="col text-center">
+                                @item.CommentDate.ToString("M/d/yyyy hh:mm tt").ToLower()
+                            </div>
+                            <div class="col text-center">
+                                By @item.Owner
+                            </div>
+                        </div>
+                        <div class="viewCommentBody">
+                            @((MarkupString)item.Comments)
+                        </div>
+                    </div>
+                </div>
+            }
+    }
+}
+
+@code {
+    private List<WhoAmIDTO> whoAmI;
+    private List<WhoAmIDTO> allWhoAmI;
+    private List<WhoAmICommentDTO> comments;
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    private List<string> owners;
+    string selectedOwner = "";
+    string commentsTitle = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWhoAmI();
+
+        owners = allWhoAmI.OrderBy(q => q.Owner).Select(q => q.Owner).ToList();
+        owners = owners.AsQueryable().Distinct().ToList();
+    }
+
+    private async Task LoadWhoAmI()
+    {
+        var tWhoAmI = await whoAmIRepository.GetBrowseWhoAmIs();
+        allWhoAmI = tWhoAmI.ToList();
+    }
+
+    private void OnOwnerChanged(ChangeEventArgs e)
+    {
+        selectedOwner = e.Value.ToString();
+        Task t = Task.Run(async () => await GetComments());
+        Thread.Sleep(500);
+        commentsTitle = "Comments for " + selectedOwner + "'s Who Am I";
+
+        whoAmI = allWhoAmI.Where(q => q.Owner == selectedOwner).ToList();
+        StateHasChanged();
+    }
+
+    private async Task GetComments()
+    {
+        var tComments = await whoAmICommentRepository.GetOwnerComments(selectedOwner);
+
+        var comments = mapper.Map<List<WhoAmICommentDTO>, List<CommentDTO>>(tComments.ToList());
+        Comments = comments.ToList();
+    }
+}

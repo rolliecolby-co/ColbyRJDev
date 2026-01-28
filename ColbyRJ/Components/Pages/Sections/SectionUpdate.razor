@@ -1,0 +1,75 @@
+﻿@page "/section/edit/{SectionId:int}"
+@rendermode InteractiveServer
+
+@inject ISectionRepository sectionRepository
+@inject ICategoryRepository categoryRepository
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row my-2">
+    <h3>Update Section</h3>
+
+    <div class="col-6">
+        @if (IsLoading)
+        {
+            <div>
+                <h5>Loading ...</h5>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="Section" OnValidSubmit="UpdateSection">
+                <DataAnnotationsValidator />
+
+                <div class="border ps-2 pt-1 pb-1">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <InputSelect @bind-Value="@Section.CategoryId" class="form-select">
+                            @foreach (var cat in Categories)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Section.CategoryId"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <InputText @bind-Value="Section.Name" class="form-control"></InputText>
+                    <ValidationMessage For="()=> Section.Name"></ValidationMessage>
+                </div>
+
+                <div class="form-group py-2">
+                    <button class="btnUpdate">Update Section</button>
+                    <a href="sections" class="btnReturn">Return</a>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int SectionId { get; set; }
+
+    private SectionDTO Section { get; set; }
+    private List<CategoryDTO> Categories { get; set; } = new List<CategoryDTO>();
+    public bool IsLoading { get; set; } = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLoading = true;
+        var categories = await categoryRepository.GetCategories();
+        Categories = categories.ToList();
+
+        var section = await sectionRepository.GetSection(SectionId);
+        Section = section;
+        IsLoading = false;
+    }
+
+    private async Task UpdateSection()
+    {
+        await sectionRepository.Update(Section);
+        navManager.NavigateTo("sections");
+    }
+}

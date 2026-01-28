@@ -1,0 +1,166 @@
+﻿@page "/profile/edit/{id:int}"
+@rendermode InteractiveServer
+
+@layout StartLayout
+
+@inject IAppUserRepository userRepository
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<HeadingC Text="Profile" />
+
+<EditForm Model="@user" OnValidSubmit="UpdateUser">
+    <DataAnnotationsValidator />
+    <IsProcessingC IsProcessing="IsProcessing" />
+    <StatusMessageC MessageType="@MessageType" MessageBody="@MessageBody" />
+
+    <div class="row mt-3">
+        <div class="col-md-3">
+            <div class="mt-2">
+                <label>Name</label>
+                <div class="form-group">
+                    <InputText @bind-Value="@user.Name" class="form-control" />
+                    <ValidationMessage For="@(() => user.Name)" />
+                </div>
+            </div>
+            <div class="mt-2">
+                <label>Display Name</label>
+                <div class="form-group">
+                    <InputText @bind-Value="@user.DisplayName" class="form-control" />
+                    <ValidationMessage For="@(() => user.DisplayName)" />
+                </div>
+            </div>
+            <div class="mt-2">
+                <label>Display Couple</label>
+                <div class="form-group">
+                    <InputText @bind-Value="@user.DisplayCouple" class="form-control" />
+                </div>
+                <div class="alertInfo">
+                    If you are married, enter how you like to be identified when being displayed as a couple, such as "Wendy & Jim".
+                    <br />
+                    This should match what is on your spouse's Profile.
+                </div>
+            </div>
+            <div class="mt-2">
+                <label>Email</label>
+                <div class="form-group">
+                    <InputText @bind-Value="@user.Email" class="form-control" disabled="true" />
+                    <ValidationMessage For="@(() => user.Email)" />
+                </div>
+            </div>
+            <div class="mt-2">
+                <label>Info Opt-In</label>
+                <div class="form-group">
+                    <InputSelect @bind-Value="@user.InfoOptIn" class="form-select">
+                        <option value=true>True</option>
+                        <option value=false>False</option>
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="form-group pt-4">
+                @if (!Updated)
+                {
+                    <button class="btnUpdate">Update</button>
+                }
+            </div>
+        </div>
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <div class="mt-2">
+                        <label>Address</label>
+                        <div class="form-group">
+                            <div class="form-group">
+                                <InputText @bind-Value="@user.Address" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <label>Note</label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@user.Note" Height="280px" />
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="mt-2">
+                                <label>Mobile Phone</label>
+                                <div class="form-group">
+                                    <InputText @bind-Value="@user.MobilePhone" class="form-control" />
+                                    <ValidationMessage For="@(() => user.MobilePhone)" />
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <label>Date of Birth</label>
+                                <div class="form-group">
+                                    <InputDate @bind-Value="@user.DOB" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="mt-2">
+                                <label>Home Phone</label>
+                                <div class="form-group">
+                                    <InputText @bind-Value="@user.HomePhone" class="form-control" />
+                                    <ValidationMessage For="@(() => user.HomePhone)" />
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <label>Wedding Date</label>
+                                <div class="form-group">
+                                    <InputDate @bind-Value="@user.WeddingDate" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="mt-2">
+                        <label>Hobbies</label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@user.Hobbies" Height="210px" />
+                    </div>
+                    <div class="mt-2">
+                        <label>Interests</label>
+                        <RZHtmlEditorMinC @bind-HtmlValue="@user.Interests" Height="210px" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    bool IsProcessing { get; set; } = false;
+    bool Updated { get; set; } = false;
+    string MessageType { get; set; }
+    string MessageBody { get; set; }
+    private AppUserDTO user { get; set; } = new AppUserDTO();
+    string userRole { get; set; }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        IsProcessing = true;
+        user = await userRepository.GetUser(Id);
+        IsProcessing = false;
+    }
+
+    private async Task UpdateUser()
+    {
+        IsProcessing = true;
+        MessageType = "ok";
+        MessageBody = "";
+        var response = await userRepository.Update(user);
+        if (response == "ok")
+        {
+            MessageBody = "Profile Updated";
+            Updated = true;
+        }
+        else
+        {
+            MessageType = "error";
+            MessageBody = response;
+        }
+        IsProcessing = false;
+    }
+
+}

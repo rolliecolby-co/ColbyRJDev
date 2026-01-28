@@ -1,0 +1,194 @@
+﻿@page "/video/edit/{VideoId:int}"
+@rendermode InteractiveServer
+
+@layout PostEditLayout
+
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IAppUserRepository appUserRepository
+@inject IVideoRepository videoRepository
+@inject IFileUpload fileUpload
+@inject NavigationManager navManager
+@attribute [Authorize]
+
+<div class="row">
+    <HeadingC Text="Edit Video" />
+</div>
+
+<EditForm Model="Video" OnValidSubmit="UpdateVideo">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <StatusMessageC MessageType="@MessageType" MessageBody="@MessageBody" />
+
+    @if (IsLoading)
+    {
+        <div>
+            <h5>Loading ...</h5>
+        </div>
+    }
+    else
+    {
+        <div class="row mt-3">
+            <div class="col">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label><b>Title</b></label>
+                            <InputText @bind-Value="Video.Title" class="form-control"></InputText>
+                            <ValidationMessage For="() => Video.Title"></ValidationMessage>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <label>Grouped By</label>
+                        <div class="divDisabled">
+                            @Video.GroupedBy
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-3 text-center">
+                            <a href="groupBy/edit/video/@Video.Id" class="btnEdit">Edit Grouped By</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <label>When</label>
+                        <div class="divDisabled">
+                            @Video.YearMonth
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-3 text-center">
+                            <a href="yearMon/edit/video/@Video.Id" class="btnEdit">Edit Year Month</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <label>Owner</label>
+                        <div class="divDisabled">
+                            @Video.Owner
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-3 text-center">
+                            <a href="owner/edit/video/@Video.Id" class="btnEdit">Edit Owner</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col">
+                        <div class="form-group text-center">
+                            <label>Active</label> &nbsp
+                            <InputCheckbox @bind-Value="Video.Active" class="form-check-input"></InputCheckbox>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="divDisabled text-center">
+                            @Video.Comments.Count Comment(s)
+                        </div>
+                    </div>
+                    <div class="col">
+                        @if (Video.Comments.Count > 0)
+                        {
+                            <div class="text-center">
+                                <a href="videoComments/@Video.Id" class="btnReview">Review Comments</a>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col">
+                        <div class="form-group text-center">
+                            <button class="btnSave">Save</button>
+                            <a href="videos" class="btnReturn ms-3">Return</a>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="alertInfo">
+                            Save after uploading video and after any changes.
+                            <br />
+                            Also, Save any changes prior to Reviewing Comments.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col">
+                        <InputFileVideo Video="@Video" />
+                        @if (userRole == "Admin")
+                        {
+                            <div class="form-group mt-2">
+                                <label>Video Filename</label>
+                                <InputText @bind-Value="Video.VideoFilename" class="form-control"></InputText>
+                            </div>
+                            <div class="form-group mt-2">
+                                <label>Video Url</label>
+                                <InputText @bind-Value="Video.VideoUrl" class="form-control"></InputText>
+                            </div>
+                            <div class="alertInfo">
+                                The above two fields are only entered manually if working with
+                                a video file that is larger than 100 mb.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-5">
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <RZHtmlEditorLteC @bind-HtmlValue="@Video.Remarks" Height="600px" />
+                    <ValidationMessage For="() => Video.Remarks"></ValidationMessage>
+                </div>
+                <div class="alert alert-info mt-2">
+                    If you would like your long narrative displayed in 2 columns,
+                    enter newColumn in a new paragraph at the desired column break point.
+                    <br />
+                    And if you would like the narrative displayed in 3 columns,
+                    enter newColumn again in a new paragraph at the desired column break point.
+                </div>
+            </div>
+        </div>
+    }
+</EditForm>
+
+@code {
+    [Parameter]
+    public int VideoId { get; set; }
+    private VideoDTO Video { get; set; } = new VideoDTO();
+
+    public bool IsLoading { get; set; } = true;
+    public string MessageType { get; set; }
+    public string MessageBody { get; set; }
+    private string userEmail = "";
+    private string userRole = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLoading = true;
+
+        var video = await videoRepository.GetVideo(VideoId);
+        Video = video;
+
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var user = authstate.User;
+        userEmail = user.Identity.Name;
+        var appUser = await appUserRepository.GetUserByEmail(userEmail);
+        if (appUser != null)
+        {
+            userRole = appUser.Role;
+        }
+
+        IsLoading = false;
+    }
+
+    private async Task UpdateVideo()
+    {
+        MessageType = "ok";
+        MessageBody = "";
+        await videoRepository.Update(Video);
+        MessageBody = "Video Updated";
+        //navManager.NavigateTo("videos");
+    }
+}

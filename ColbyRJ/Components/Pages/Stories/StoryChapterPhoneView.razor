@@ -1,0 +1,117 @@
+﻿@page "/phoneStoryChapter/{key}"
+
+@layout ViewLayout
+
+@inject IJSRuntime JS
+@inject IStoryChapterRepository storyChapterRepository
+@inject IMapper mapper
+
+<div class="">
+    <HeadingC Text="Story Chapter" />
+</div>
+<div class="text-center mt-2 pb-2">
+    <a href="phoneStories" class="pBtnReturn">Return</a>
+</div>
+
+<div class="viewDiv">
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">Story When: @Story.YearMonth</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5>Story: @Story.Title</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">Owner: @Story.Owner</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5 class="mt-1">Chapter When: @Chapter.YearMonth</h5>
+    </div>
+    <div class="divItem mt-2 text-center">
+        <h5>Chapter: @Chapter.Title</h5>
+    </div>
+
+    @if (Chapter.AudioUrl.Length > 10)
+    {
+        <div class="mt-2 text-center">
+            <audio class="audioBorder" controls="controls"><source src="@Chapter.AudioUrl" /></audio>
+        </div>
+    }
+
+    <div class="divItem mt-1">
+        @((MarkupString)remarks)
+    </div>
+
+    @if (Chapter.Photos != null && Chapter.Photos.Count > 0)
+    {
+        @foreach (var item in Chapter.Photos)
+        {
+            <div class="mt-2">
+                <div class="viewPhotoCard">
+                    <div>
+                        <img src="@item.PhotoUrl" class="img-fluid viewPhoto" />
+                    </div>
+                    @if (item.Caption.Length > 1)
+                    {
+                        <div class="text-center pt-2">
+                            <h5>@item.Caption</h5>
+                        </div>
+                    }
+                    @if (item.PhotoDateStr.Length > 1)
+                    {
+                        <div class="text-center">
+                            @item.PhotoDateStr
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    @if (Comments != null && Comments.Count > 0)
+    {
+        <ViewPhoneCommentsC Comments="Comments" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Key { get; set; }
+    private StoryChapterDTO Chapter = new StoryChapterDTO();
+    private StoryDTO Story = new StoryDTO();
+    public List<PhotoDTO> Photos = new List<PhotoDTO>();
+    List<CommentDTO> Comments = new List<CommentDTO>();
+    string remarks = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var chapter = await storyChapterRepository.GetStoryChapterByKey(Key);
+        Chapter = chapter;
+        if (Chapter.Comments != null && Chapter.Comments.Count > 0)
+        {
+            var comments = mapper.Map<List<StoryChapterCommentDTO>, List<CommentDTO>>(Chapter.Comments.ToList());
+            Comments = comments.ToList();
+        }
+
+        Story = Chapter.Story;
+
+        if (Chapter.Photos != null)
+        {
+            foreach (var vPhoto in Chapter.Photos)
+            {
+                var photo = new PhotoDTO
+                    {
+                        Caption = vPhoto.Caption,
+                        OrderBy = vPhoto.OrderBy,
+                        PhotoDate = vPhoto.PhotoDate,
+                        PhotoDateStr = vPhoto.PhotoDateStr,
+                        PhotoUrl = vPhoto.PhotoUrl
+                    };
+
+                Photos.Add(photo);
+            }
+        }
+
+        remarks = Chapter.Body;
+        remarks = remarks.Replace("<p>newColumn</p>", "");
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,50 @@
+﻿@page "/loginTally"
+
+@layout AdminLayout
+
+@inject IAppUserRepository userRepository
+
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="row ">
+    <div class="col mb-2">
+        <HeadingC Text="Login Tally Last 90 Days" />
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col">
+    </div>
+    <div class="col-10">
+        <RadzenDataGrid PageSize="15" AllowPaging="true" Data="@Tally" TItem="LoginTallyDTO"
+                        PagerHorizontalAlign="HorizontalAlign.Center">
+            <Columns>
+                <RadzenDataGridColumn Property="DisplayName" Title="Name" HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="Email" Title="Email" 
+                                      HeaderCssClass="rz-background-color-info-lighter" />
+                <RadzenDataGridColumn Property="NumberOfLoginsLast90Days" Title="Number of Logins Last 90 Days"
+                                      HeaderCssClass="rz-background-color-info-lighter" Width="220px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn Property="LastLoginDateStr" Title="Last Login" Width="160px" TextAlign="TextAlign.Center"
+                                      HeaderCssClass="rz-background-color-info-lighter" />               
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+    <div class="col">
+    </div>
+</div>
+
+@code {
+    private List<LoginTallyDTO> Tally { get; set; } = new List<LoginTallyDTO>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTally();
+    }
+
+    private async Task LoadTally()
+    {
+        var tTally = await userRepository.GetLoginTally();
+        Tally = tTally.ToList();
+    }
+}
