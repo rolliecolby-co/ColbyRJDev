@@ -1,0 +1,11 @@
+﻿
+@if (IsProcessing)
+{
+    <div class="px-3 pt-1 mb-3" style="display: inline-block; border: 2px solid red; border-radius: 10px;">
+        <h4 style="color: blue;">Processing ...</h4>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsProcessing { get; set; }
+}

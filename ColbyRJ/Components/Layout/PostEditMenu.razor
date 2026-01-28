@@ -1,0 +1,98 @@
+﻿<div class="top-row ps-3 navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand text-white" href="browse">Colby Family Memories</a>
+        <a class="navbar-brand text-white ms-5" href="postEdit">Post / Edit</a>
+        <button title="Navigation menu " class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <AuthorizeView>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="snippets">Snippets</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="photoAlbums">Photo Albums</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="stories">Stories</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="videos">Videos</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="photoFolders">Photo Folders</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="docs">Documents</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="galleryPhotos">Gallery Photos</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="gallerySectionsDecades">Gallery Sections-Decades</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="trips">Trips</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="whoAmIs">Who Am Is</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="addresses">Home Addresses</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="jobs">Jobs</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="units">Military Units</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="broadcastEmails">Broadcast Emails</NavLink>
+        </div>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="Admin">
+        @if(DisplayName == "Grandpa")
+        {
+            <div class="px-1 nav-item">
+                <NavLink class="nav-link" href="elementsTally">Elements Tally</NavLink>
+            </div>
+        }
+
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="admin">Admin</NavLink>
+        </div>
+    </AuthorizeView>
+</div>
+
+@code {
+    @inject AuthenticationStateProvider GetAuthenticationStateAsync
+    @inject IAppUserRepository appUserRepository
+
+    private string DisplayName;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var user = authstate.User;
+        var userEmail = user.Identity.Name;
+
+        var appUser = await appUserRepository.GetUserByEmail(userEmail);
+        if (appUser != null)
+        {
+            DisplayName = appUser.DisplayName;
+        }
+    }
+
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

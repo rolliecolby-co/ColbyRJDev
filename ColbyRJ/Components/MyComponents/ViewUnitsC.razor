@@ -1,0 +1,108 @@
+﻿@if (Units != null && Units.Any())
+{
+    ownerPrev = "zzz";
+    <div class="row">
+        <div class="col">
+            @*<SubHeadingC Text="Select an Owner" />*@
+            <div class="sectionHeader">
+                Select an Owner
+            </div>
+        </div>
+        <div class="col-md-9">
+            @foreach (var itemU in Units)
+            {
+                if (ownerPrev != itemU.Owner)
+                {
+                    var btnCSS = "";
+                    if (selectedOwner == itemU.Owner)
+                    {
+                        btnCSS = "selectedWho";
+                    }
+                    <span class="ms-3 mb-2">
+                        <button class="btnWho @btnCSS"
+                    onclick="@(() => SelectedWho(itemU.Owner))">
+                            @itemU.Owner
+                        </button>
+                    </span>
+                    ownerPrev = itemU.Owner;
+                    ownerEmail = itemU.OwnerEmail;
+                }
+            }
+        </div>
+    </div>
+}
+
+
+@if (SelectedUnits.Any())
+{
+    <div class="row ">
+        <div class="col-12 mb-2 pt-2">
+            <SubHeadingC Text="Owner / Military Unit / Unit Location / Comments" />
+        </div>
+    </div>
+
+    ownerPrev = "zzz";
+    <div class="row">
+        <div class="col-12">
+            @foreach (var itemU in SelectedUnits)
+            {
+                if (ownerPrev != itemU.Owner)
+                {
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="sectionHeader">
+                                <b>@itemU.Owner</b>
+                            </div>
+                        </div>
+                    </div>
+                    ownerPrev = itemU.Owner;
+                    ownerEmail = itemU.OwnerEmail;
+
+                    <div class="row">
+                        @foreach (var item in Units)
+                        {
+                            if (item.Owner == itemU.Owner)
+                            {
+                                <div class="col-md-4">
+                                    <div class="editCard">
+                                        <div class="editCardTitle">
+                                            @item.MilitaryUnit
+                                        </div>
+                                        <div class="text-center">
+                                            @item.UnitLocation
+                                        </div>
+                                        <div class="editCardRemarks">
+                                            @((MarkupString)item.Remarks)
+                                        </div>
+                                        <div class="text-center">
+                                            @item.CommentCount
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public List<UnitDTO> Units { get; set; }
+    public List<UnitDTO> SelectedUnits = new List<UnitDTO>();
+
+    private string ownerPrev = "zzz";
+    private string ownerEmail = "";
+    private string selectedOwner = "";
+    private string SelectedOwnerEmail = "";
+
+    private void SelectedWho(string owner)
+    {
+        selectedOwner = owner;
+
+        SelectedUnits = Units.Where(q => q.Owner == owner).ToList();
+
+        StateHasChanged();
+    }
+}

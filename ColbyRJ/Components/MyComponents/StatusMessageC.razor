@@ -1,0 +1,13 @@
+﻿@if (!String.IsNullOrEmpty(MessageType))
+{
+    var statusMessageClass = (MessageType == "error") ? "danger" : "success";
+
+    <div class="my-2 alert alert-@statusMessageClass">
+        @MessageBody
+    </div>
+}
+
+@code {
+    [Parameter] public string MessageType { get; set; }
+    [Parameter] public string MessageBody { get; set; }
+}

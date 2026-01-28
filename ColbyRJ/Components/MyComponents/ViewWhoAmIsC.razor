@@ -1,0 +1,151 @@
+﻿@if (WhoAmIs != null && WhoAmIs.Any())
+{
+    ownerPrev = "zzz";
+    <div class="row">
+        <div class="col">
+            <div class="sectionHeader">
+                Select an Owner
+            </div>
+        </div>
+        <div class="col-md-9">
+            @foreach (var itemW in WhoAmIs)
+            {
+                if (ownerPrev != itemW.Owner)
+                {
+                    var btnCSS = "";
+                    if (selectedOwner == itemW.Owner)
+                    {
+                        btnCSS = "selectedWho";
+                    }
+                    <span class="ms-3 mb-2">
+                        <button class="btnWho @btnCSS"
+                    onclick="@(() => SelectedWho(itemW.Owner))">
+                            @itemW.Owner
+                        </button>
+                    </span>
+                    ownerPrev = itemW.Owner;
+                    ownerEmail = itemW.OwnerEmail;
+                }
+            }
+        </div>
+    </div>
+}
+
+
+@if (SelectedWhoAmIs.Any())
+{
+    <div class="row ">
+        <div class="col-12 mb-2 pt-2">
+            <SubHeadingC Text="Owner / Who Am I / Comments" />
+        </div>
+    </div>
+
+    ownerPrev = "zzz";
+    <div class="row">
+        <div class="col-12">
+            @foreach (var itemW in SelectedWhoAmIs)
+            {
+                if (ownerPrev != itemW.Owner)
+                {
+                    <div class="row">
+                        <div class="col-md-9">
+                            <div class="sectionHeader">
+                                <b>@itemW.Owner</b>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class=" text-center py-2">
+                                <a href="@($"whoAmIComment/add/{itemW.Id}")" class="btnAdd">Add a Comment</a>
+                            </div>
+                        </div>
+                    </div>
+                    ownerPrev = itemW.Owner;
+                    ownerEmail = itemW.OwnerEmail;
+
+                    <div class="row mt-2">
+                        @foreach (var item in WhoAmIs)
+                        {
+                            if (item.Owner == itemW.Owner)
+                            {
+                                <div class="col-md-4">
+                                    <div class="editCard">
+                                        <div class="editCardTitle">
+                                            @item.Title
+                                        </div>
+                                        @if (item.AudioUrl.Length > 10)
+                                        {
+                                            <div class="mt-2 text-center">
+                                                <div>
+                                                    <audio controls="controls"><source src="@item.AudioUrl" /></audio>
+                                                </div>
+                                            </div>
+                                        }
+                                        <div class="editCardRemarks">
+                                            @((MarkupString)item.Remarks)
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div class="row">
+                        <div class="col"></div>
+                        <div class="col-11">
+                            <div class="row ">
+                                <div class="col-12 ps-3 pe-3">
+                                    <div class="alertInfo">
+                                        Comments for @itemW.Owner's Who Am I
+                                    </div>
+                                </div>
+                                @foreach (var item in Comments)
+                                {
+                                    if (item.WhoAmIOwnerEmail == ownerEmail)
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="editCard">
+                                                <div class="editCardTitle">
+                                                    <div class="row">
+                                                        <div class="col text-center">
+                                                            @item.CommentDate.ToString("M/d/yyyy")
+                                                        </div>
+                                                        <div class="col text-center">
+                                                            @item.Owner
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="editCardRemarks">
+                                                    @((MarkupString)item.Comments)
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="col"></div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public List<WhoAmIDTO> WhoAmIs { get; set; }
+    [Parameter] public List<WhoAmICommentDTO> Comments { get; set; }
+    public List<WhoAmIDTO> SelectedWhoAmIs = new List<WhoAmIDTO>();
+
+    private string ownerPrev = "zzz";
+    private string ownerEmail = "";
+    private string selectedOwner = "";
+    private string SelectedOwnerEmail = "";
+
+    private void SelectedWho(string owner)
+    {
+        selectedOwner = owner;
+
+        SelectedWhoAmIs = WhoAmIs.Where(q => q.Owner == owner).ToList();
+
+        StateHasChanged();
+    }
+}

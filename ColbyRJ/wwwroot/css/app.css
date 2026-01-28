@@ -1,0 +1,92 @@
+﻿@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+
+html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+label {
+    padding-bottom: 5px;
+}
+
+table {
+    border: 1px solid gray;
+}
+
+    table tr {
+        border-bottom: 1px solid gray;
+    }
+
+    table th {
+        background-color: lightgray;
+        padding: 10px;
+    }
+
+    table td {
+        padding: 10px;
+    }
+
+tr:nth-child(even) {
+    background-color: #EAFAF1;
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+.invalid {
+    outline: 1px solid red;
+}
+.mainPanel {
+    border: 2px solid #2E2827;
+    border-radius: 10px;
+    padding: 8px 20px 0 20px;
+    background-color: #39B9EA;
+}
+
+.subPanel {
+    border: 2px solid green;
+    border-radius: 10px;
+    padding: 8px 20px 0 20px;
+    background-color: lightgreen;
+}
+
+.subSubPanel {
+    border: 2px solid brown;
+    border-radius: 10px;
+    padding: 8px 20px 0 20px;
+    background-color: burlywood;
+}
+
+.subSubSubPanel {
+    border: 2px solid brown;
+    border-radius: 10px;
+    padding: 8px 20px 0 20px;
+    background-color: cornsilk;
+}
+
+.validation-message {
+    color: red;
+}
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+

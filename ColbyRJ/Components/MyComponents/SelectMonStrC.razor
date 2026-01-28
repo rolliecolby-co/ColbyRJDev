@@ -1,0 +1,53 @@
+﻿
+<div class="form-group">
+    <label>@VLabel</label>
+
+    <div class="">
+        <select value="@VMonStr" class="form-select" @onchange="OnVMonStrChanged">
+            <option value="">-- Select Month --</option>
+            <option value="">NA @VMonStr</option>
+            <option value="01">Jan</option>
+            <option value="02">Feb</option>
+            <option value="03">Mar</option>
+            <option value="04">Apr</option>
+            <option value="05">May</option>
+            <option value="06">Jun</option>
+            <option value="07">Jul</option>
+            <option value="08">Aug</option>
+            <option value="09">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
+        </select>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string VLabel { get; set; }
+    [Parameter] public string VMonStr { get; set; }
+
+    [Parameter] public EventCallback<string> VMonStrChanged { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (VMonStr == "Jan") VMonStr = "01";
+        if (VMonStr == "Feb") VMonStr = "02";
+        if (VMonStr == "Mar") VMonStr = "03";
+        if (VMonStr == "Apr") VMonStr = "04";
+        if (VMonStr == "May") VMonStr = "05";
+        if (VMonStr == "Jun") VMonStr = "06";
+        if (VMonStr == "Jul") VMonStr = "07";
+        if (VMonStr == "Aug") VMonStr = "08";
+        if (VMonStr == "Sep") VMonStr = "09";
+        if (VMonStr == "Oct") VMonStr = "10";
+        if (VMonStr == "Nov") VMonStr = "11";
+        if (VMonStr == "Dec") VMonStr = "12";
+    }
+
+    private Task OnVMonStrChanged(ChangeEventArgs e)
+    {
+        VMonStr = e.Value.ToString();
+        return VMonStrChanged.InvokeAsync(VMonStr);
+    }
+
+}

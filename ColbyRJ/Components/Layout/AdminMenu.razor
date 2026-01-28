@@ -1,0 +1,55 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand text-white" href="browse">Colby Family Memories</a>
+        <a class="navbar-brand text-white ms-5" href="admin">Admin</a>
+        <button title="Navigation menu " class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <AuthorizeView Roles="Admin">
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="categories">Categories</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="sections">Sections</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="topics">Topics</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="users">Users</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="hints">Hints</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="gallerySections">Gallery Sections</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="galleryDecades">Gallery Decades</NavLink>
+        </div>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="loginTally">Login Tally</NavLink>
+        </div>
+    </AuthorizeView>
+
+    <AuthorizeView>
+        <div class="px-1 nav-item">
+            <NavLink class="nav-link" href="postEdit">Post / Edit</NavLink>
+        </div>
+    </AuthorizeView>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

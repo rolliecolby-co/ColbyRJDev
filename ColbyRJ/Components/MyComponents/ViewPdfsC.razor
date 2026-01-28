@@ -1,0 +1,45 @@
+﻿@foreach (var pdf in Pdfs)
+{
+    <div class="@colSize mt-2">
+        <div class="viewPdfCard">
+            @if (pdf.Title.Length > 1 || pdf.PdfDateStr.Length > 1)
+            {
+                <div class="row mt-2 mb-2">
+                    <div class="col">
+                        <div class="text-center">
+                            @pdf.PdfDateStr 
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="text-center">
+                            <h5>@pdf.Title</h5>
+                        </div>
+                    </div>
+                </div>
+            }
+            <div class="text-center">
+                <embed src="@pdf.PdfUrl" style="width: 100%; height: 1150px;" />
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public List<PdfDTO> Pdfs { get; set; }
+    [Parameter] public string PdfSize { get; set; }
+    string colSize = "col-4";
+
+    protected override void OnParametersSet()
+    {
+        if (PdfSize == "medium")
+        {
+            colSize = "col-6";
+        }
+        else if (PdfSize == "large")
+        {
+            colSize = "col-12";
+        }
+        StateHasChanged();
+    }
+}
+

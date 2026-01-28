@@ -1,0 +1,138 @@
+﻿@if (Addresses != null && Addresses.Any())
+{
+    whoPrev = "zzz";
+    <div class="row">
+        <div class="col">
+            <div class="sectionHeader">
+                Select For Whom
+            </div>
+        </div>
+        <div class="col-md-9">
+            @foreach (var itemA in Addresses)
+            {
+                if (whoPrev != itemA.Who)
+                {
+                    var btnCSS = "";
+                    if (selectedWho == itemA.Who)
+                    {
+                        btnCSS = "selectedWho";
+                    }
+                    <span class="ms-3 mb-2">
+                        <button class="btnWho @btnCSS"
+                                onclick="@(() => SelectedWho(itemA.Who))">
+                            @itemA.Who
+                        </button>
+                    </span>
+                    whoPrev = itemA.Who;
+                }
+            }
+        </div>
+    </div>
+}
+
+
+@if (SelectedAddresses.Any())
+{
+    <div class="row ">
+        <div class="col-12 mb-2 pt-2">
+            <SubHeadingC Text="For Whom / Start Date / Home Address / With Remarks / With Photos / Has Comments" />
+        </div>
+    </div>
+
+    whoPrev = "zzz";
+    <div class="row">
+        <div class="col-12">
+            @foreach (var itemA in SelectedAddresses)
+            {
+                if (whoPrev != itemA.Who)
+                {
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="sectionHeader">
+                                <b>@itemA.Who</b>
+                            </div>
+                        </div>
+                    </div>
+                    whoPrev = itemA.Who;
+
+                    <div class="row mt-2">
+                        <div class="col-8">
+                            @foreach (var item in Addresses)
+                            {
+                                if (item.Who == itemA.Who)
+                                {
+                                    <div class="row mt-2">
+                                        <div class="text-center" style="width: 110px;">
+                                            @item.StartDate.ToString("M/d/yyyy")
+                                        </div>
+                                        <div class="col">
+                                            @item.HomeAddress
+                                        </div>
+                                        <div class="text-center" style="width: 110px;">
+                                            remarks
+                                        </div>
+                                        <div class="text-center" style="width: 110px;">
+                                            photos
+                                        </div>
+                                        <div class="text-center" style="width: 110px;">
+                                            comments
+                                        </div>
+                                        <div class="text-center" style="width: 110px;">
+                                            <button type="button" class="btnView" onclick="@(() => ViewAddress(item.Id))">View</button>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        <div class="col">
+                            @if (Address != null)
+                            {
+                                <div class="">
+                                    @Address.StartDate.ToString("M/d/yyyy")
+                                </div>
+                                <div class="">
+                                    @Address.HomeAddress
+                                </div>
+                                <div class="">
+                                    @((MarkupString)Address.Remarks)
+                                </div>
+                                if (Address.Photos != null && Address.Photos.Count > 0)
+                                {
+                                    foreach (var item in Address.Photos)
+                                    {
+                                        <div class="">
+                                            <img src="@item.PhotoUrl" class="img-fluid" />
+                                        </div>
+                                    }
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public List<AddressDTO> Addresses { get; set; }
+    public List<AddressDTO> SelectedAddresses = new List<AddressDTO>();
+    AddressDTO Address = new AddressDTO();
+
+    private string whoPrev = "zzz";
+    private string selectedWho = "xxx";
+
+    private void SelectedWho(string who)
+    {
+        selectedWho = who;
+        SelectedAddresses = Addresses.Where(q => q.Who == who).ToList();
+        StateHasChanged();
+    }
+
+    private void ViewAddress(int id)
+    {
+        var vAddress = Addresses.FirstOrDefault(q => q.Id == id);
+        Address = vAddress;
+        StateHasChanged();
+    }
+}

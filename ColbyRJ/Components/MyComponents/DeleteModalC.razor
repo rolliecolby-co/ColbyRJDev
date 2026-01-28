@@ -1,0 +1,44 @@
+﻿
+<div class="modal fade show" id="appModal" style="display: block; background-color: rgba(10,10,10,.8);" aria-modal="true" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modalHeader">
+                <h4 class="modal-title">Are you sure?</h4>
+                <button type="button" class="close" @onclick="@ModalCancel">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>@Text</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btnCancel" @onclick="@ModalCancel">Cancel</button>
+                <button type="button" class="btnDelete" @onclick="@ModalOk">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public string Text { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OnClose { get; set; }
+
+    private Task ModalCancel()
+    {
+        return OnClose.InvokeAsync(false);
+    }
+
+    private Task ModalOk()
+    {
+        return OnClose.InvokeAsync(true);
+    }
+}
+
+
+<style>
+    .modalHeader {
+        background-color: lightpink;
+    }
+</style>

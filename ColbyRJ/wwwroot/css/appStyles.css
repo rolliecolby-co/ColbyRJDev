@@ -1,0 +1,406 @@
+﻿
+
+a, .btnA {
+    color: #0366d6;
+}
+
+.btnActive {
+    border: 5px solid lightgray !important;
+}
+
+.btnAdd {
+    color: white;
+    background-color: #ff8000;
+    border: 2px solid #ff8000;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+    text-decoration: none;
+}
+
+    .btnAdd:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnCancel {
+    color: black;
+    background-color: lightgray;
+    border: 2px solid gray;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+    text-decoration: none;
+}
+
+    .btnCancel:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnChange {
+    color: black;
+    background-color: #1ac6ff;
+    border: 2px solid #1ac6ff;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+    text-decoration: none;
+}
+
+    .btnChange:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnClose {
+    color: black;
+    background-color: lightgray;
+    border: 2px solid gray;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+    text-decoration: none;
+}
+
+    .btnClose:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnDanger {
+    color: #fff;
+    background-color: red;
+    border-color: red;
+    border: 2px solid red;
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+    .btnDanger:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnDelete {
+    color: #fff;
+    background-color: red;
+    border-color: red;
+    border: 2px solid red;
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+    .btnDelete:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnDeleteOutline {
+    color: red;
+    background-color: white;
+    border: 2px solid red;
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+.btnEdit {
+    color: black;
+    background-color: #f1e7da;
+    border: 2px solid #a67a3f;
+    border-radius: 5px;
+    padding: 5px 10px;
+    text-decoration: none;
+}
+
+    .btnEdit:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnGroup {
+    color: black;
+    background-color: azure;
+    font-size: 1.2rem;
+    border: 2px solid blue;
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+    .btnGroup:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.4rem;
+    }
+
+.btnList {
+    color: black;
+    background-color: #e6ffe6;
+    border: 2px solid #008000;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+
+    .btnList:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.4rem;
+    }
+
+.btnList2 {
+    color: black;
+    background-color: azure;
+    border: 2px solid #008000;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+
+    .btnList2:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.4rem;
+    }
+
+.btnLoad {
+    color: black;
+    background-color: azure;
+    font-size: 1.2rem;
+    border: 2px solid blue;
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+    .btnLoad:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.4rem;
+    }
+
+.btnLogin {
+    color: black;
+    background-color: azure;
+    font-size: 1.2rem;
+    border: 2px solid blue;
+    border-radius: 5px;
+    padding: 5px 10px;
+    text-decoration: none;
+}
+
+    .btnLogin:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.4rem;
+    }
+
+.btnOutline {
+    border: 2px solid gray;
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+.btnReturn {
+    color: white;
+    background-color: gray;
+    border: 2px solid gray;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+    text-decoration: none;
+}
+
+    .btnReturn:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnReview {
+    color: green;
+    background-color: white;
+    border: 2px solid green;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+    text-decoration: none;
+}
+
+    .btnReview:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnSave {
+    color: black;
+    background-color: #00e600;
+    border: 2px solid #00e600;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+}
+
+    .btnSave:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnSelect {
+    color: black;
+    background-color: #ffedcc;
+    border: 2px solid darkorange;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+}
+
+    .btnSelect:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnSend {
+    color: black;
+    background-color: #00e600;
+    border: 2px solid #00e600;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+    text-decoration: none;
+}
+
+    .btnSend:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnShow {
+    color: black;
+    background-color: #e6ffe6;
+    border: 2px solid #008000;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+}
+
+    .btnShow:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnSubmit {
+    color: black;
+    background-color: #00e600;
+    border: 2px solid #00e600;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+}
+
+    .btnSubmit:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnUpdate {
+    color: black;
+    background-color: #1ac6ff;
+    border: 2px solid #1ac6ff;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+}
+
+    .btnUpdate:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnView {
+    color: black;
+    background-color: #e6ffe6;
+    border: 2px solid #008000;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+    text-decoration: none;
+}
+
+    .btnView:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.btnWho {
+    color: white;
+    background-color: dodgerblue;
+    border: 2px solid dodgerblue;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 5px 10px;
+}
+
+    .btnWho:hover {
+        color: black;
+        background-color: white;
+        font-size: 1.2rem;
+    }
+
+.colCenter {
+    text-align: center;
+}
+
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+
+.pBtnAdd {
+    color: white;
+    background-color: #ff8000;
+    border: 2px solid #ff8000;
+    border-radius: 5px;
+    padding: 5px 5px;
+    margin: 5px 0px;
+    text-decoration: none;
+}
+
+.pBtnReturn {
+    color: white;
+    background-color: gray;
+    border: 2px solid gray;
+    border-radius: 5px;
+    padding: 5px 5px;
+    margin: 5px 0px;
+    text-decoration: none;
+}
+.pBtnView {
+    color: black;
+    background-color: #e6ffe6;
+    border: 2px solid #008000;
+    border-radius: 5px;
+    padding: 5px 5px;
+    margin: 5px 0px;
+}

@@ -1,0 +1,18 @@
+﻿
+@inherits LayoutComponentBase
+
+@inject NavigationManager navManager
+
+<PageTitle>Memories</PageTitle>
+
+<div class="page">
+    <div class="sidebar">
+        <AdminMenu />
+    </div>
+
+    <main>
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>

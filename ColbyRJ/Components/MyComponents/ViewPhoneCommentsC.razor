@@ -1,0 +1,28 @@
+﻿
+<div class="">
+    <div class="viewCommentsHeader mt-2">
+        <h5>Comments</h5>
+    </div>
+        @foreach (var item in Comments)
+        {
+            <div class="mt-2">
+                <div class="viewCommentCard">
+                    <div class="row py-2">
+                        <div class="col text-center">
+                            @item.CommentDate.ToString("M/d/yyyy hh:mm tt").ToLower()
+                        </div>
+                        <div class="col text-center">
+                            By @item.Owner
+                        </div>
+                    </div>
+                    <div class="viewCommentBody">
+                        @((MarkupString)item.Comments)
+                    </div>
+                </div>
+            </div>
+        }
+</div>
+
+@code {
+    [Parameter] public List<CommentDTO> Comments { get; set; }
+}

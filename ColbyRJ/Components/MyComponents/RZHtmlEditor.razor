@@ -1,0 +1,41 @@
+﻿<RadzenHtmlEditor @bind-Value=@HtmlValue style=@height Change=@OnChange>
+    <RadzenHtmlEditorUndo />
+    <RadzenHtmlEditorSeparator />
+    <RadzenHtmlEditorBold />
+    <RadzenHtmlEditorItalic />
+    <RadzenHtmlEditorUnderline />
+    <RadzenHtmlEditorSeparator />
+    <RadzenHtmlEditorAlignLeft />
+    <RadzenHtmlEditorAlignCenter />
+    <RadzenHtmlEditorAlignRight />
+    <RadzenHtmlEditorSeparator />
+    <RadzenHtmlEditorUnorderedList />
+    <RadzenHtmlEditorSeparator />
+    <RadzenHtmlEditorLink />
+    <RadzenHtmlEditorUnlink />
+    <RadzenHtmlEditorSeparator />
+    <RadzenHtmlEditorFontSize />
+    <RadzenHtmlEditorColor />
+    <RadzenHtmlEditorBackground />
+    <RadzenHtmlEditorRemoveFormat />
+    <RadzenHtmlEditorSource />
+</RadzenHtmlEditor>
+
+@code {
+    [Parameter] public string HtmlValue { get; set; }
+    [Parameter] public string Height { get; set; }
+    [Parameter] public EventCallback<string> HtmlValueChanged { get; set; }
+    string height = "";
+
+    protected override void OnParametersSet()
+    {
+        height = "height: " + Height;
+    }
+
+    Task OnChange(string html)
+    {
+        //console.Log($"Change: {html}");
+        HtmlValue = html;
+        return HtmlValueChanged.InvokeAsync(HtmlValue);
+    }
+}

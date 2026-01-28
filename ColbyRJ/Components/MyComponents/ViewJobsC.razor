@@ -1,0 +1,108 @@
+﻿@if (Jobs != null && Jobs.Any())
+{
+    ownerPrev = "zzz";
+    <div class="row">
+        <div class="col">
+            @*<SubHeadingC Text="Select an Owner" />*@
+            <div class="sectionHeader">
+                Select an Owner
+            </div>
+        </div>
+        <div class="col-md-9">
+            @foreach (var itemJ in Jobs)
+            {
+                if (ownerPrev != itemJ.Owner)
+                {
+                    var btnCSS = "";
+                    if (selectedOwner == itemJ.Owner)
+                    {
+                        btnCSS = "selectedWho";
+                    }
+                    <span class="ms-3 mb-2">
+                        <button class="btnWho @btnCSS"
+                    onclick="@(() => SelectedWho(itemJ.Owner))">
+                            @itemJ.Owner
+                        </button>
+                    </span>
+                    ownerPrev = itemJ.Owner;
+                    ownerEmail = itemJ.OwnerEmail;
+                }
+            }
+        </div>
+    </div>
+}
+
+
+@if (SelectedJobs.Any())
+{
+    <div class="row ">
+        <div class="col-12 mb-2 pt-2">
+            <SubHeadingC Text="Owner / Employer / Position / Comments" />
+        </div>
+    </div>
+
+    ownerPrev = "zzz";
+    <div class="row">
+        <div class="col-12">
+            @foreach (var itemJ in SelectedJobs)
+            {
+                if (ownerPrev != itemJ.Owner)
+                {
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="sectionHeader">
+                                <b>@itemJ.Owner</b>
+                            </div>
+                        </div>
+                    </div>
+                    ownerPrev = itemJ.Owner;
+                    ownerEmail = itemJ.OwnerEmail;
+
+                    <div class="row">
+                        @foreach (var item in Jobs)
+                        {
+                            if (item.Owner == itemJ.Owner)
+                            {
+                                <div class="col-md-4">
+                                    <div class="editCard">
+                                        <div class="editCardTitle">
+                                            @item.Employer
+                                        </div>
+                                        <div class="text-center">
+                                            @item.Position
+                                        </div>
+                                        <div class="editCardRemarks">
+                                            @((MarkupString)item.Remarks)
+                                        </div>
+                                        <div class="text-center">
+                                            @item.CommentCount
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public List<JobDTO> Jobs { get; set; }
+    public List<JobDTO> SelectedJobs = new List<JobDTO>();
+
+    private string ownerPrev = "zzz";
+    private string ownerEmail = "";
+    private string selectedOwner = "";
+    private string SelectedOwnerEmail = "";
+
+    private void SelectedWho(string owner)
+    {
+        selectedOwner = owner;
+
+        SelectedJobs = Jobs.Where(q => q.Owner == owner).ToList();
+
+        StateHasChanged();
+    }
+}

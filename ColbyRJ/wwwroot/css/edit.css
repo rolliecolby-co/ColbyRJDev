@@ -1,0 +1,140 @@
+
+
+.commentBody {
+    padding: 10px 15px;
+    background-color: #FFF8DC;
+}
+
+.commentCard {
+    background-color: #E0FFFF;
+    border: 2px solid blue;
+    border-radius: 10px;
+}
+
+.commentFooter {
+    padding: 10px 15px;
+}
+
+.divDisabled {
+    border: 1px solid gray;
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    padding: 5px 10px;
+}
+
+.divItem {
+    border: 1px solid brown;
+    border-radius: 10px;
+    background-color: cornsilk;
+    padding: 5px 10px;
+}
+
+.editCard {
+    border: 2px solid blue;
+    border-radius: 10px;
+    background-color: lightblue;
+    padding: 0;
+    margin-bottom: 10px;
+}
+
+.editCardButtonRow {
+    border: 1px solid brown;
+    border-radius: 10px;
+    background-color: tan;
+    margin: 5px;
+}
+
+.editCardButtons {
+    padding: 10px 15px;
+}
+
+.editCardTitle {
+    border: 1px solid green;
+    border-radius: 10px;
+    background-color: lightgreen;
+    padding: 10px 15px;
+    margin: 5px;
+}
+
+.editCardRemarks {
+    border: 1px solid black;
+    border-radius: 10px;
+    background-color: cornsilk;
+    padding: 10px 15px;
+    margin: 5px;
+}
+
+.listSpan {
+    border: 1px solid gray;
+    border-radius: 5px;
+}
+
+.pdfBody {
+    padding: 10px 15px;
+    background-color: #FFF8DC;
+}
+
+.pdfBorder {
+    border: 2px solid blue;
+    border-radius: 10px;
+}
+
+.pdfTitle {
+    background-color: #DCDCDC;
+    padding: 10px 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.pdfCard {
+    background-color: #E0FFFF;
+    border: 2px solid blue;
+    border-radius: 10px;
+}
+
+.pdfFooter {
+    padding: 10px 15px;
+}
+
+.pdfOrderDate {
+    background-color: #DCDCDC;
+    padding: 10px 15px;
+}
+
+
+.photoBody {
+    padding: 10px 15px;
+    background-color: #FFF8DC;
+}
+
+.photoBorder {
+    border: 2px solid blue;
+    border-radius: 10px;
+}
+
+.photoCaption {
+    background-color: #DCDCDC;
+    padding: 10px 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.photoCard {
+    background-color: #E0FFFF;
+    border: 2px solid blue;
+    border-radius: 10px;
+}
+
+.photoFooter {
+    padding: 10px 15px;
+}
+
+.photoOrderDate {
+    background-color: #DCDCDC;
+    padding: 10px 15px;
+}
+
+.selectedWho {
+    border: 5px solid lightgray;
+    border-radius: 10px;
+}

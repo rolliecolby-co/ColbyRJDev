@@ -1,0 +1,179 @@
+﻿
+.adminPanel {
+    border: 1px solid #8B4513;
+    border-radius: 10px;
+    background-color: #FFEFD5;
+    padding: 0 5px 5px 5px;
+}
+.alertInfo {
+    background-color: #E0FFFF;
+    border: 1px solid blue;
+    border-radius: 10px;
+    margin: 10px 0;
+    padding: 5px 15px;
+}
+
+.audioBorder {
+    border: 1px solid brown;
+    border-radius: 20px;
+}
+.browsePanel {
+    border: 1px solid #8B4513;
+    border-radius: 10px;
+    background-color: #FFEFD5;
+    padding: 0 5px 5px 5px;
+}
+
+.custom-header-style {
+    font-weight: bold;
+    font-size: large;
+    color: #000000;
+    background-color: #D8F9DB;
+}
+
+.custom-subheader-style {
+    font-weight: bold;
+    color: #000000;
+    background-color: #e9dbc8;
+}
+
+.editorForm {
+    background-color: brown;
+    width: 100%;
+    padding: 1px;
+}
+
+.editPanel {
+    border: 1px solid #8B4513;
+    border-radius: 10px;
+    background-color: #FFEFD5;
+    padding: 0 5px 5px 5px;
+}
+
+.listCard {
+    border: 1px solid brown;
+    border-radius: 5px;
+    margin: 5px 0;
+    padding: 5px 10px;
+}
+
+.pdf-edit {
+    display: block;
+    background-size: cover !important;
+    border: 3px solid green;
+    position: relative;
+}
+
+.pdf-edit-title {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: green;
+    color: white;
+    padding: 0px 6px;
+    display: inline-block
+}
+
+.phone-header-style {
+    font-weight: bold;
+    color: #000000;
+    background-color: #D8F9DB;
+}
+
+.photo-edit {
+    display: block;
+    background-size: cover !important;
+    border: 3px solid green;
+    position: relative;
+}
+.photo-edit-title {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: green;
+    color: white;
+    padding: 0px 6px;
+    display: inline-block
+}
+
+.sectionHeader {
+    border: 1px solid blue;
+    border-radius: 5px;
+    margin: 5px 0;
+    padding: 5px 10px;
+    background-color: moccasin;
+}
+.viewCommentBody {
+    background-color: white;
+    border: 1px solid gray;
+    border-radius: 10px;
+    padding: 5px 10px;
+}
+
+.viewCommentCard {
+    background-color: #F0FFF0;
+    border: 1px solid green;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+.viewComments {
+    background-color: cornsilk;
+    border: 1px solid blue;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-top: 10px;
+}
+
+
+.viewCommentsHeader {
+    background-color: #1E90FF;
+    color: white;
+    border: 1px solid blue;
+    border-radius: 10px;
+    padding-top: 5px;
+    padding-left: 15px;
+}
+
+.viewDiv {
+    background-image: url("../images/blueparchment.jpg");
+    border: 1px solid brown;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-top: 10px;
+}
+
+.viewDiv2 {
+    background-color: #F0F8FF;
+    border: 1px solid blue;
+    border-radius: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 5px 10px;
+}
+
+.viewHeader {
+    background-color: #F8F6F0;
+    border: 1px solid gray;
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+.viewPdfCard {
+    background-color: #FFE4B5;
+    border: 1px solid blue;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+.viewPhoto {
+    border: 1px solid red;
+    border-radius: 10px;
+}
+
+.viewPhotoCard {
+    background-color: #FFE4B5;
+    border: 1px solid blue;
+    border-radius: 10px;
+    padding: 5px;
+}

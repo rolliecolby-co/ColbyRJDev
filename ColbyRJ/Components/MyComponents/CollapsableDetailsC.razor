@@ -1,0 +1,56 @@
+﻿
+<div class="collapsable">
+    <div class="title" @onclick="@Toggle">
+        @if (Collapsed)
+        {
+            <span style="font-size: 1.25rem; font-weight:600;">&#8595;</span>
+        }
+        else
+        {
+            <span style="font-size: 1.25rem; font-weight:400;">&#8593;</span>
+        }
+        <span class="ps-2 pe-5">
+            @Title
+        </span>
+    </div>
+</div>
+
+@if (!Collapsed)
+{
+    <div class="collapsable-panel">
+        @ChildContent
+    </div>
+}
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public bool Collapsed { get; set; }
+    [Parameter] public string Title { get; set; }
+
+    void Toggle()
+    {
+        Collapsed = !Collapsed;
+    }
+}
+
+<style>
+    .collapsable {
+        border: 1px solid blue;
+        border-radius: 10px;
+        padding: 5px 10px;
+        background-color: lightgreen;
+        margin-top: 10px;
+    }
+
+    .collapsable-panel {
+        padding: 5px 10px;
+        background-color: white;
+        margin-left: 10px;
+        border: 1px solid gray;
+        border-radius: 5px;
+    }
+
+    .collapsable .title {
+        display: table-cell
+    }
+</style>

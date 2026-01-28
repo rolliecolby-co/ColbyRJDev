@@ -1,0 +1,44 @@
+﻿@foreach (var photo in Photos)
+{
+    <div class="@colSize mt-2">
+        <div class="viewPhotoCard text-center">
+            <img src="@photo.PhotoUrl" asp-append-version="true" class="img-fluid viewPhoto" />
+        </div>
+        @if (photo.Caption.Length > 1)
+        {
+            <div class="text-center pt-2">
+                <h5>@photo.Caption</h5>
+            </div>
+        }
+        @if (photo.PhotoDateStr.Length > 1)
+        {
+            <div class="text-center">
+                @photo.PhotoDateStr
+            </div>
+        }
+    </div>
+}
+
+
+@code {
+    [Parameter] public List<PhotoDTO> Photos { get; set; }
+    [Parameter] public string PhotoSize { get; set; }
+    string colSize = "col-4";
+
+    protected override void OnParametersSet()
+    {
+        if (PhotoSize == "small")
+        {
+            colSize = "col-3";
+        }
+        else if (PhotoSize == "medium")
+        {
+            colSize = "col-4";
+        }
+        else if (PhotoSize == "large")
+        {
+            colSize = "col-6";
+        }
+        StateHasChanged();
+    }
+}
