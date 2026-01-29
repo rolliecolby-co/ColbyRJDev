@@ -365,3 +365,17 @@ FodyWeavers.xsd
 appsettings.json 
 appsettings.Development.json 
 DbInitializer.cs
+
+addressPhotos/
+docPdfs/
+PhotoAlbumPhotos/
+photoDirs/
+photoGallery/
+snippetAudio/
+snippetPhotos/
+storyChapterPhotos/
+storyPhotos/
+tripPhotos/
+videos/
+whoAmIAudio/
+
