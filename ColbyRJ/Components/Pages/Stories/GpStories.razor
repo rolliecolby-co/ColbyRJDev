@@ -1,0 +1,105 @@
+﻿@page "/gp-stories"
+@rendermode InteractiveServer
+
+@layout NullLayout
+
+@inject IStoryRepository storyRepository
+@inject IStoryChapterRepository storyChapterRepository
+
+<GrandpaC PageTitle="Grandpa's Stories with Chapters" Page="Stories">
+
+    @if (showList)
+    {
+        <div class="row mt-2">
+            @foreach (var story in Stories)
+            {
+                <div class="col">
+                    <div class="text-center" style="">
+                        <button type="button" class="btnList"
+                                onclick="@(() => ShowStory(story.Id))">
+                            @story.Title
+                        </button>
+                    </div>
+
+                    <div class="row">
+                        @foreach (var chapter in story.Chapters)
+                        {
+                            <div class="col-auto" style="">
+                                <button type="button" class="btnList2"
+                                        onclick="@(() => ShowStoryChapter(chapter.Key))">
+                                    @chapter.Title
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (showStory)
+    {
+        <GpStoryC Story="@Story" />
+    }
+
+    @if (showStoryChapter)
+    {
+        <GpStoryChapterC Chapter="@StoryChapter" />
+    }
+
+</GrandpaC>
+
+@code {
+    private List<StoryDTO> stories;
+    private List<StoryDTO> allStories;
+    private List<StoryDTO> Stories = new List<StoryDTO>();
+    private StoryDTO Story = new StoryDTO();
+    private StoryChapterDTO StoryChapter = new StoryChapterDTO();
+    bool showList = true;
+    bool showStory = false;
+    bool showStoryChapter = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStories();
+
+        Stories = allStories.OrderBy(o => o.Decade).ToList();
+    }
+
+    private async Task LoadStories()
+    {
+        var result = await storyRepository.GetActiveStories();
+        allStories = result.ToList();
+        allStories = allStories
+            .Where(q => q.Title.Contains("Helicopter") || q.Title.Contains("Vietnam"))
+            .ToList();
+    }
+
+    private async Task ShowStory(int id)
+    {
+        bool showStoryChapter = false;
+        var result = await storyRepository.GetStory(id);
+        Story = result;
+        showStory = true;
+        StateHasChanged();
+    }
+
+    private async Task ShowStoryChapter(string key)
+    {
+        showStory = false;
+        var result = await storyChapterRepository.GetStoryChapterByKey(key);
+        StoryChapter = result;
+        showStoryChapter = true;
+        StateHasChanged();
+    }
+}
+
+<style>
+    .btnList:hover {
+        font-size: 1rem;
+    }
+
+    .btnList2:hover {
+        font-size: 1.2rem;
+    }
+</style>

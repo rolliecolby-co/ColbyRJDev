@@ -24,9 +24,7 @@
         {
             foreach (var item in leftHints)
             {
-                <CollapsableC Title="@item.Title" Collapsed="true">
-                    @((MarkupString)@item.Value)
-                </CollapsableC>
+                <CollapsableC2 Title="@item.Title" Collapsed="true" ChildContent="@item.Value" />
             }
         }
     </div>
@@ -44,9 +42,7 @@
         {
             foreach (var item in rightHints)
             {
-                <CollapsableC Title="@item.Title" Collapsed="true">
-                    @((MarkupString)@item.Value)
-                </CollapsableC>
+                <CollapsableC2 Title="@item.Title" Collapsed="true" ChildContent="@item.Value" />
             }
         }
     </div>

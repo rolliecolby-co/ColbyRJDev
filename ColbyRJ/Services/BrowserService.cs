@@ -15,7 +15,6 @@ namespace ColbyRJ.Services
         {
             return await _js.InvokeAsync<BrowserDimension>("getDimensions");
         }
-
     }
 
     public class BrowserDimension

@@ -1,0 +1,79 @@
+﻿@page "/gp-snippets"
+@rendermode InteractiveServer
+
+@layout NullLayout
+
+@inject ISnippetRepository snippetRepository
+
+@inject NavigationManager navManager
+
+<GrandpaC PageTitle="Grandpa's Snippets" Page="Snippets">
+
+    @if (showList)
+    {
+        <div class="row">
+            @foreach (var snippet in Snippets)
+            {
+                <div class="col-md-4">
+                    <div class="m-2 text-center">
+                        <button type="button" class="btnList"
+                                onclick="@(() => ShowSnippet(snippet.Id))">
+                            @snippet.Title
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (showSnippet)
+    {
+        <GpSnippetC Snippet="@Snippet" />
+    }
+
+</GrandpaC>
+
+@code {
+    private List<SnippetDTO> snippets;
+    private List<SnippetDTO> allSnippets;
+    private List<SnippetDTO> Snippets = new List<SnippetDTO>();
+    private SnippetDTO Snippet = new SnippetDTO();
+    bool showList = true;
+    bool showSnippet = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSnippets();
+
+        Snippets = allSnippets.OrderBy(o => o.Decade).ToList();
+    }
+
+    private async Task LoadSnippets()
+    {
+        var result = await snippetRepository.GetActiveSnippets();
+
+        allSnippets = result.ToList();
+        allSnippets = allSnippets
+            .Where(q => q.Title.Contains("Instrument") || q.Title.Contains("Mountain") || q.Title.Contains("Learning"))
+            .ToList();
+    }
+
+    private async Task ShowSnippet(int id)
+    {
+        var result = await snippetRepository.GetSnippet(id);
+        Snippet = result;
+        showSnippet = true;
+        StateHasChanged();
+
+    }
+}
+
+<style>
+    .btnList:hover {
+        font-size: 1rem;
+    }
+
+    .btnList2:hover {
+        font-size: 1.2rem;
+    }
+</style>

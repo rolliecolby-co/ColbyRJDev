@@ -52,10 +52,11 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+builder.Services.AddScoped<BrowserService>();
+
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 
 builder.Services.AddAutoMapper(typeof(Maps));
-builder.Services.AddScoped<BrowserService>();
 builder.Services.AddRadzenComponents();
 
 builder.Services.AddScoped<IFileUpload, FileUpload>();

@@ -1,5 +1,4 @@
-﻿
-<div class="collapsable">
+﻿<div class="collapsable">
     <div class="title" @onclick="@Toggle">
         @if (Collapsed)
         {
@@ -9,7 +8,7 @@
         {
             <span class="oi oi-chevron-bottom mr-1"></span>
         }
-        <span class="ps-2">
+        <span class="ps-2 pe-5">
             @Title
         </span>
     </div>
@@ -22,7 +21,9 @@
     </div>
 }
 
+
 @code {
+
     [Parameter] public RenderFragment ChildContent { get; set; }
     [Parameter] public bool Collapsed { get; set; }
     [Parameter] public string Title { get; set; }

@@ -1,4 +1,6 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@rendermode InteractiveServer
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand text-white" href="browse">Colby Family Memories</a>
         <button title="Navigation menu " class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -7,7 +9,7 @@
     </div>
 </div>
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+<div class="@NavMenuCssClass ms-3" @onclick="ToggleNavMenu">
     <AuthorizeView>
         <div class="px-4 nav-item">
             <a href="phoneProfile/edit/@AppUserId" class="ml-md-3">Welcome, @DisplayName</a>

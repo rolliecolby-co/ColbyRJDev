@@ -29,15 +29,11 @@
                     {
                         if (count == 1)
                         {
-                            <CollapsableC Title="@item.Title" Collapsed="false">
-                                @((MarkupString)@item.Value)
-                            </CollapsableC>
+                            <CollapsableC2 Title="@item.Title" Collapsed="false" ChildContent="@item.Value" />
                         }
                         else
                         {
-                            <CollapsableC Title="@item.Title" Collapsed="true">
-                                @((MarkupString)@item.Value)
-                            </CollapsableC>
+                            <CollapsableC2 Title="@item.Title" Collapsed="true" ChildContent="@item.Value" />
                         }
                         count++;
                     }
@@ -60,15 +56,11 @@
                 {
                     if (count == 1)
                     {
-                        <CollapsableC Title="@item.Title" Collapsed="false">
-                            @((MarkupString)@item.Value)
-                        </CollapsableC>
+                        <CollapsableC2 Title="@item.Title" Collapsed="false" ChildContent="@item.Value" />
                     }
                     else
                     {
-                        <CollapsableC Title="@item.Title" Collapsed="true">
-                            @((MarkupString)@item.Value)
-                        </CollapsableC>
+                        <CollapsableC2 Title="@item.Title" Collapsed="true" ChildContent="@item.Value" />
                     }
                     count++;
                 }
@@ -93,7 +85,7 @@
             var dimension = await _service.GetDimensions();
             if (dimension.Width < 950)
             {
-                navManager.NavigateTo($"/phone");
+                navManager.NavigateTo($"phone");
             }
         }
     }

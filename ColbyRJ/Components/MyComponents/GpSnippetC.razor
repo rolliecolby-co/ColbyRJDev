@@ -1,0 +1,84 @@
+﻿
+
+<div class="viewDiv">
+    <div class="row">
+        <div class="col text-center">
+            <div class="divItem">
+                <h5 class="mt-1">@Snippet.YearMonth</h5>
+            </div>
+        </div>
+        <div class="col-6 text-center">
+            <div class="divItem">
+                <h5>@Snippet.Title</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        @if (!hideBody)
+        {
+            <div class="col">
+                <div class="divItem">
+                    @((MarkupString)bodyCol1)
+                </div>
+            </div>
+            @if (bodyCol2.Length > 0)
+            {
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol2)
+                    </div>
+                </div>
+            }
+            @if (bodyCol3.Length > 0)
+            {
+                <div class="col">
+                    <div class="divItem">
+                        @((MarkupString)bodyCol3)
+                    </div>
+                </div>
+            }
+        }       
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public SnippetDTO Snippet { get; set; }
+    bool hideBody = false;
+    string bodyCol1 = "";
+    string bodyCol2 = "";
+    string bodyCol3 = "";
+
+    protected override void OnParametersSet()
+    {
+        bodyCol1 = "";
+        bodyCol2 = "";
+        bodyCol3 = "";
+
+        if (Snippet != null && Snippet.Body.Length > 10)
+        {
+            bodyCol1 = Snippet.Body;
+            string[] cols = bodyCol1.Split("<p>newColumn</p>");
+
+            int colNum = 0;
+            foreach (var aCol in cols)
+            {
+                colNum++;
+                if (colNum == 1)
+                {
+                    bodyCol1 = aCol;
+                }
+                if (colNum == 2)
+                {
+                    bodyCol2 = aCol;
+                }
+                if (colNum == 3)
+                {
+                    bodyCol3 = aCol;
+                }
+            }
+        }
+    }
+
+}

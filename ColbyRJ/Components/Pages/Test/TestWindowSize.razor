@@ -1,7 +1,7 @@
 ﻿@page "/testWindowSize"
 
-@inject BrowserService _service
-
+@* @inject BrowserService _service
+ *@
 <h1>Window Dimensions</h1>
 
 <h3>Check if less than 450 width</h3>
@@ -51,10 +51,10 @@
     {
         if (firstRender)
         {
-            var dimension = await _service.GetDimensions();
-            Height = dimension.Height;
-            Width = dimension.Width;
-            StateHasChanged();
+            // var dimension = await _service.GetDimensions();
+            // Height = dimension.Height;
+            // Width = dimension.Width;
+            // StateHasChanged();
         }
     }
 }

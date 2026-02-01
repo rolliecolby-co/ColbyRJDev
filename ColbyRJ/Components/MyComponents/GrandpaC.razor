@@ -1,0 +1,83 @@
+﻿@rendermode InteractiveServer
+
+<div class="ms-3 me-3">
+    <div class="row mt-3">
+        <div class="col"></div>
+        @if (Page != "Memories")
+        {
+            <div class="col-auto">
+                <a href="grandpa">
+                    <h4>Colby Family Memories</h4>
+                </a>
+            </div>
+        }
+        @if (Page != "WhoAmI")
+        {
+            <div class="col-auto">
+                <a href="gp-whoami">
+                    <h4>Who Am I</h4>
+                </a>
+            </div>
+        }
+        @if (Page != "Snippets")
+        {
+            <div class="col-auto">
+                <a href="gp-snippets">
+                    <h4>Snippets</h4>
+                </a>
+            </div>
+        }
+        @if (Page != "Stories")
+        {
+            <div class="col-auto">
+                <a href="gp-stories">
+                    <h4>Stories</h4>
+                </a>
+            </div>
+        }
+        @if (Page != "Videos")
+        {
+            <div class="col-auto">
+                <a href="gp-videos">
+                    <h4>Videos</h4>
+                </a>
+            </div>
+        }
+        <div class="col"></div>
+    </div>
+
+    <div class="row">
+        <div class="col ps-5 pe-5">
+            <div class="text-center pageHeader">
+                <h2>@PageTitle</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public string PageTitle { get; set; }
+    [Parameter] public string Page { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}
+
+<style>
+    a {
+        color: gray;
+    }
+
+    .pageHeader {
+        border: 2px solid blue;
+        border-radius: 10px;
+        background-color: lightblue;
+        padding: 5px 10px 0 10px;
+        margin-top: 10px 10px 0 10px;
+        margin-bottom: 10px;
+    }
+</style>

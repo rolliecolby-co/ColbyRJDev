@@ -1,0 +1,50 @@
+﻿@page "/gp-whoami"
+@rendermode InteractiveServer
+
+@layout NullLayout
+
+@inject IWhoAmIRepository whoAmIRepository
+@inject IWhoAmICommentRepository whoAmICommentRepository
+
+@inject NavigationManager navManager
+@inject IMapper mapper
+
+<GrandpaC PageTitle="Grandpa's Who Am I" Page="WhoAmI">
+
+    @if (whoAmI != null && whoAmI.Count > 0)
+    {
+        <div class="row ">
+            @foreach (var item in whoAmI)
+            {
+                <div class="col-md-4 mt-2">
+                    <div class="editCard">
+                        <div class="editCardTitle">
+                            @item.Title
+                        </div>
+                        <div class="editCardRemarks">
+                            @((MarkupString)item.Remarks)
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</GrandpaC>
+
+@code {
+    private List<WhoAmIDTO> whoAmI;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWhoAmI();
+    }
+
+    private async Task LoadWhoAmI()
+    {
+        var result = await whoAmIRepository.GetBrowseWhoAmIs();
+        whoAmI = result
+            .Where(q => q.Owner == "Grandpa")
+            .ToList();
+    }
+}

@@ -1,0 +1,58 @@
+﻿@rendermode InteractiveServer
+
+<div class="mt-4">
+    <div class="titleDiv" @onclick="ToggleVisibility" style="display: inline-block;">
+        @if (IsVisible)
+        {
+            <ChevronDownC />
+        }
+        else
+        {
+            <ChevronRightC />
+        }
+        <span>@Title</span>
+    </div>
+
+    @if (IsVisible)
+    {
+        <div class="ms-3">
+            <div class="contentDiv mt-1" style="display: inline-block;">
+                @DivContent
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public bool IsVisible { get; set; } = true;
+
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string DivContent { get; set; } = string.Empty;
+
+    private void ToggleVisibility()
+    {
+        IsVisible = !IsVisible;
+    }
+
+}
+<style>
+    .contentDiv {
+        border: 1px solid black;
+        border-radius: 10px;
+        background-color: lightgreen;
+        padding: 10px 15px;
+    }
+
+    .titleDiv {
+        border: 1px solid black;
+        border-radius: 10px;
+        background-color: burlywood;
+        padding: 10px 15px;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+</style>
